@@ -34,7 +34,7 @@ final class VideoPipeline {
 
     func flush() {
         queue.async { [weak self] in
-            self?.displayLayer?.flush()
+            self?.displayLayer?.sampleBufferRenderer.flush()
         }
     }
 
@@ -111,12 +111,13 @@ final class VideoPipeline {
             if framesSeen < 3 { NSLog("[MirrorDeck] no display layer — frames are being dropped") }
             return
         }
-        if layer.status == .failed {
+        let renderer = layer.sampleBufferRenderer
+        if renderer.status == .failed {
             NSLog("[MirrorDeck] display layer failed: %@",
-                  layer.error?.localizedDescription ?? "unknown")
-            layer.flush()
+                  renderer.error?.localizedDescription ?? "unknown")
+            renderer.flush()
         }
-        layer.enqueue(sampleBuffer)
+        renderer.enqueue(sampleBuffer)
     }
 
     private func rebuildFormatDescription(generation: Int) {

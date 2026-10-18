@@ -2,6 +2,7 @@
 // swiftc -module-cache-path .build/module-cache Sources/MirrorDeck/VideoPipeline.swift scripts/check-video.swift -o .build/check-video
 // .build/check-video
 import Foundation
+import AVFoundation
 
 @main
 struct VideoChecks {
@@ -60,6 +61,38 @@ struct VideoChecks {
             RunLoop.current.run(until: Date().addingTimeInterval(0.01))
         }
         assert(staleReports == 1, "A new stream must still report its size after stopping")
-        print("H.264/HEVC format, stop and reconnect checks passed")
+        // Synthetic 64×64 keyframes generated with VideoToolbox, not phone recordings.
+        for (isH265, base64) in [
+            (false, "AAAAASdkAAusVlDDeBBhFAAAAAEo7jywAAAAAQYFLUdWStxcTEM/lO/FETzRQ6gBAAADAAEDAAADAAECAAHmAAsAAAMAAAMAAAMAlgwDkSsBgAAAAAEluCAfgC5KrBE2ZhdIAInDIblqRp9HCs8OgWpUK2McE/5C9FaHIAAaTU/N8ASwR52A"),
+            (true, "AAAAAUABDAH//wFgAAADALAAAAMAAAMAHhXAkAAAAAFCAQEBYAAAAwCwAAADAAADAB6gFCBBwY+IFe5FlRAAAAABRAHALLwUyQAAAAFOAQUyR1ZK3FxMQz+U78URPNFDqAEAAAMAAQMAAAMAAQIAAIcACwAAAwAAAwAAAwCgDAORKwEN/////4AAAAABKAGvMibA6IXof4arqWAS6qNQqKCRe5oum9x4Hw==")
+        ] {
+            let layer = AVSampleBufferDisplayLayer()
+            let playback = VideoPipeline()
+            playback.displayLayer = layer
+            let keyframe = Data(base64Encoded: base64)!
+            func enqueue() {
+                keyframe.withUnsafeBytes {
+                    playback.handleAccessUnit($0.bindMemory(to: UInt8.self).baseAddress!, $0.count, isH265: isH265)
+                }
+            }
+            func waitForDisplay(_ ready: Bool) {
+                let deadline = Date().addingTimeInterval(3)
+                while layer.isReadyForDisplay != ready && Date() < deadline {
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+                }
+                assert(layer.isReadyForDisplay == ready, "Native decoding or displayed-image reset failed")
+                assert(layer.sampleBufferRenderer.status != .failed)
+            }
+            enqueue()
+            waitForDisplay(true)
+            playback.flush()
+            playback.reset()
+            waitForDisplay(false)
+            enqueue()
+            waitForDisplay(true)
+            playback.reset()
+            waitForDisplay(false)
+        }
+        print("H.264/HEVC decoding, flush, stop and reconnect checks passed")
     }
 }
