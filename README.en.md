@@ -2,13 +2,15 @@
 
 [中文](README.md) · **English**
 
+<img src="icon.png" alt="TinyMirror icon" width="128" height="128">
+
 # TinyMirror
 
 **Put your iPhone screen on your Mac over Wi-Fi.**
 
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-lightgrey.svg)](#requirements)
-[![Release](https://img.shields.io/github/v/release/egarl004/mirrordeck)](https://github.com/egarl004/mirrordeck/releases/latest)
+[![Release](https://img.shields.io/github/v/release/lingmacker/TinyMirror)](https://github.com/lingmacker/TinyMirror/releases/latest)
 
 </div>
 
@@ -23,7 +25,7 @@ TinyMirror is display-only: mouse and keyboard input stays on your Mac.
 
 ## Installing
 
-Download the latest `.dmg` from **[Releases](https://github.com/egarl004/mirrordeck/releases/latest)**,
+Download the latest `.dmg` from **[Releases](https://github.com/lingmacker/TinyMirror/releases/latest)**,
 open it, and drag TinyMirror to Applications.
 
 Builds use **ad-hoc signing**, not Developer ID signing or Apple notarization.
@@ -197,6 +199,7 @@ iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP/H.264 or HEVC)──�
   `libMirrorCore.dylib` by `make build` (via `native/build.sh`). All third-party code lives here and nowhere else.
 - **`Sources/TinyMirror/`** — the app: menu bar shell, native mirror window,
   and H.264/HEVC → `AVSampleBufferDisplayLayer` pipeline (native decode).
+- **`Sources/TinyMirror/Resources/`** — bundle metadata (`Info.plist`), localized strings, app artwork, and menu bar assets. Xcode's `actool` compiles the charcoal, white, and orange “Echo” design in `AppIcon.icon/` into a native icon stack and `.icns`. `Assets.xcassets/` supplies 18-point monochrome menu bar templates: outlined frames when idle, a filled front frame when connected. Editable menu bar sources are `MenuBarIcon*.svg`; the root `icon.png` is the documentation export.
 - **`vendor/`** — [UxPlay](https://github.com/FDH2/UxPlay), fetched at a pinned
   commit by `scripts/bootstrap.sh` rather than committed.
 

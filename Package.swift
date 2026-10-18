@@ -17,6 +17,13 @@ let package = Package(
             name: "TinyMirror",
             dependencies: ["CMirrorBridge"],
             path: "Sources/TinyMirror",
+            // Bundle metadata and icon sources are handled by scripts/build-app.sh.
+            exclude: [
+                "Resources/Info.plist",
+                "Resources/AppIcon.icon",
+                "Resources/MenuBarIcon.svg",
+                "Resources/MenuBarIconConnected.svg",
+            ],
             resources: [.process("Resources")],
             linkerSettings: [
                 // libMirrorCore.dylib is linked dynamically and kept replaceable

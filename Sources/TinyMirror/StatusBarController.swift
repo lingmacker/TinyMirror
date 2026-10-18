@@ -31,9 +31,8 @@ final class StatusBarController {
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.autosaveName = Self.autosaveName
-        statusItem.button?.image = NSImage(
-            systemSymbolName: "iphone.gen3",
-            accessibilityDescription: "TinyMirror")
+        statusItem.button?.image = Bundle.module.image(forResource: "MenuBarIcon")
+        statusItem.button?.setAccessibilityLabel("TinyMirror")
         statusItem.button?.toolTip = "TinyMirror"
 
         showItem = NSMenuItem(title: String(localized: "Show Mirror Window", bundle: .appLocalization), action: #selector(showWindow), keyEquivalent: "m")
@@ -163,9 +162,8 @@ final class StatusBarController {
         clientItem.title = name.map {
             String.localizedStringWithFormat(String(localized: "Mirroring: %@", bundle: .appLocalization), $0)
         } ?? String(localized: "No device connected", bundle: .appLocalization)
-        statusItem.button?.image = NSImage(
-            systemSymbolName: name != nil ? "iphone.gen3.radiowaves.left.and.right" : "iphone.gen3",
-            accessibilityDescription: "TinyMirror")
+        statusItem.button?.image = Bundle.module.image(
+            forResource: name != nil ? "MenuBarIconConnected" : "MenuBarIcon")
     }
 
     @objc private func stopMirroring() {

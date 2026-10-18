@@ -1,12 +1,14 @@
 <div align="center">
 
+<img src="icon.png" alt="TinyMirror 图标" width="128" height="128">
+
 # TinyMirror
 
 **通过 Wi‑Fi 将 iPhone 屏幕投射到 Mac。**
 
 [![许可证：GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![平台：macOS 26+](https://img.shields.io/badge/platform-macOS%2026%2B-lightgrey.svg)](#系统要求)
-[![最新版本](https://img.shields.io/github/v/release/egarl004/mirrordeck)](https://github.com/egarl004/mirrordeck/releases/latest)
+[![最新版本](https://img.shields.io/github/v/release/lingmacker/TinyMirror)](https://github.com/lingmacker/TinyMirror/releases/latest)
 
 **中文** · [English](README.en.md)
 
@@ -22,7 +24,7 @@ TinyMirror 仅接收画面，不支持从 Mac 向 iPhone 转发鼠标或键盘�
 
 ## 安装
 
-从 **[Releases](https://github.com/egarl004/mirrordeck/releases/latest)** 下载最新的 `.dmg`，
+从 **[Releases](https://github.com/lingmacker/TinyMirror/releases/latest)** 下载最新的 `.dmg`，
 打开后将 TinyMirror 拖入“应用程序”文件夹。
 
 构建产物使用 **ad-hoc 签名**，不是 Developer ID 签名，也没有经过 Apple 公证。
@@ -162,6 +164,7 @@ iPhone ──(AirPlay：Bonjour + 配对 + FairPlay + RTSP/H.264 或 HEVC)──
   所有第三方代码只位于这里。
 - **`Sources/TinyMirror/`**：应用本身，包括菜单栏外壳、原生投屏窗口和 H.264/HEVC →
   `AVSampleBufferDisplayLayer` 视频管线（由系统解码）。
+- **`Sources/TinyMirror/Resources/`**：集中存放 `Info.plist`、本地化文案、应用图标和菜单栏资源。`AppIcon.icon/` 中的黑白橘「叠幕」由 Xcode 的 `actool` 编译为原生图标栈和 `.icns`；`Assets.xcassets/` 提供 18 点菜单栏单色模板，未连接时双框空心，连接后前框实心。可编辑菜单栏源文件为 `MenuBarIcon*.svg`，根目录的 `icon.png` 用于文档展示。
 - **`vendor/`**：[UxPlay](https://github.com/FDH2/UxPlay) 的源码目录，由 `scripts/bootstrap.sh` 按固定 commit 获取，不提交到仓库。
 
 ## 路线图

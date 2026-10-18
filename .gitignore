@@ -8,6 +8,9 @@ native/build/
 # Third-party sources — fetched by scripts/bootstrap.sh at pinned commits
 vendor/
 
+# Local design explorations
+design/
+
 # Local editor settings
 .vscode/
 
