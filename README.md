@@ -62,7 +62,7 @@ aspect ratio, and rotating the phone fits the new orientation to your display
 without cropping the picture.
 
 Choose **Keep Window on Top** in the menu bar to float the mirror above other
-applications. The preference is remembered across launches.
+applications. It is on by default, and your choice is remembered across launches.
 
 ## Known limitations
 

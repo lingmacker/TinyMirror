@@ -15,7 +15,7 @@ enum Settings {
 
     /// Whether the mirror window floats above other applications.
     static var alwaysOnTop: Bool {
-        get { defaults.bool(forKey: "alwaysOnTop") }
+        get { defaults.object(forKey: "alwaysOnTop") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "alwaysOnTop") }
     }
 }
