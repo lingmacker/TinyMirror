@@ -56,6 +56,14 @@ struct WindowChecks {
         assert(frame.videoView.displayLayer.cornerRadius == (frame.isFullScreen ? 0 : MirrorFrameView.cornerRadius - inset))
     }
 
+    static func assertIdleWindow(in window: NSWindow) {
+        assert(window.frame.size == NSSize(width: 370, height: 730),
+               "An idle mirror must restore the default phone-sized window")
+        let picture = (window.contentView as! MirrorFrameView).videoView.bounds
+        assert(abs(picture.width / picture.height - 9.0 / 18) < 0.001,
+               "The idle picture must use a 9:18 portrait ratio")
+    }
+
     static func previewImage(size: NSSize) -> NSImage {
         let image = NSImage(size: size)
         image.lockFocus()
@@ -96,6 +104,7 @@ struct WindowChecks {
         let window = controller.window!
         let frameView = window.contentView as! MirrorFrameView
         assertPictureFrame(in: window)
+        assertIdleWindow(in: window)
         assert(!window.isOpaque && window.hasShadow)
         assert(controller.windowWillResize(window, to: NSSize(width: 450, height: 620)) == NSSize(width: 450, height: 620))
         let screen = NSScreen.main!.visibleFrame
@@ -243,6 +252,23 @@ struct WindowChecks {
         wait { controller.playbackState == .connecting }
         controller.setDeviceName(nil)
         assert(controller.playbackState == .waiting)
+        assertIdleWindow(in: window)
+        controller.dismiss()
+        controller.present()
+        assertIdleWindow(in: window)
+        controller.setDeviceName("Landscape iPhone")
+        controller.setVideoDimensions(width: 2556, height: 1179)
+        controller.setDeviceName(nil)
+        assertIdleWindow(in: window)
+        controller.setDeviceName("Full-screen iPhone")
+        controller.setVideoDimensions(width: 1179, height: 2556)
+        controller.windowWillEnterFullScreen(Notification(name: NSWindow.willEnterFullScreenNotification, object: window))
+        let fullScreenFrame = window.frame
+        controller.setDeviceName(nil)
+        assert(window.frame == fullScreenFrame, "Disconnecting must not resize a full-screen window")
+        controller.windowDidExitFullScreen(Notification(name: NSWindow.didExitFullScreenNotification, object: window))
+        assertIdleWindow(in: window)
+        assertPictureFrame(in: window)
         controller.setDeviceName("Another iPhone")
         assert(controller.playbackState == .connecting, "A new device must never show a previous device’s frame")
         controller.mouseEntered(with: entered)

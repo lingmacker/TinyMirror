@@ -4,6 +4,10 @@ import AVFoundation
 final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     enum PlaybackState { case waiting, connecting, mirroring, unavailable }
 
+    // Sizes include the 5pt bezel; the idle picture itself uses a 9:18 ratio.
+    private static let idleWindowSize = NSSize(width: 370, height: 730)
+    private static let idleMinimumSize = NSSize(width: 250, height: 490)
+
     private let frameView = MirrorFrameView()
     var videoView: MirrorVideoView { frameView.videoView }
     private let waitingView = NSBox()
@@ -20,7 +24,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
 
     init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 540),
+            contentRect: NSRect(origin: .zero, size: Self.idleWindowSize),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
         window.title = "MirrorDeck"
@@ -33,7 +37,6 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.fullScreenPrimary]
-        window.minSize = NSSize(width: 320, height: 360)
         super.init(window: window)
         window.delegate = self
         frameView.frame = window.contentView!.bounds
@@ -47,6 +50,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             name: .AVSampleBufferDisplayLayerReadyForDisplayDidChange,
             object: videoView.displayLayer)
         updatePlaybackState()
+        resetIdleWindowSize()
         window.center()
     }
 
@@ -107,10 +111,18 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         deviceName = name
         if name == nil {
             videoSize = .zero
-            window?.aspectRatio = .zero
-            window?.minSize = NSSize(width: 320, height: 360)
+            resetIdleWindowSize()
         }
         updatePlaybackState()
+    }
+
+    private func resetIdleWindowSize() {
+        guard let window, !frameView.isFullScreen, !window.styleMask.contains(.fullScreen) else { return }
+        window.aspectRatio = .zero
+        window.minSize = Self.idleMinimumSize
+        let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
+            ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        resizeWindow(to: Self.idleWindowSize, on: screen)
     }
 
     @objc private func videoReadinessChanged(_ notification: Notification) {
@@ -220,6 +232,11 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         let size = NSSize(width: pictureWidth + border, height: targetHeight + border)
         let minWidth = min(pictureWidth, max(260, 160 * aspect))
         window.minSize = NSSize(width: minWidth + border, height: minWidth / aspect + border)
+        resizeWindow(to: size, on: screen)
+    }
+
+    private func resizeWindow(to size: NSSize, on screen: NSRect) {
+        guard let window else { return }
         let center = window.isVisible
             ? NSPoint(x: window.frame.midX, y: window.frame.midY)
             : NSPoint(x: screen.maxX - size.width / 2 - 48, y: screen.midY)
@@ -253,7 +270,9 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         frameView.isFullScreen = false
         frameView.layoutSubtreeIfNeeded()
         updateWindowLevel()
-        if videoSize != .zero && videoSize != fullScreenVideoSize {
+        if videoSize == .zero && fullScreenVideoSize != .zero {
+            resetIdleWindowSize()
+        } else if videoSize != .zero && videoSize != fullScreenVideoSize {
             setVideoDimensions(width: Int(videoSize.width), height: Int(videoSize.height))
         }
         refreshWindowButtons()

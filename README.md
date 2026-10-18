@@ -56,6 +56,8 @@ Choose **Show Mirror Window** in the menu bar even before connecting to see
 connection instructions. The waiting screen stays until the first video frame
 is actually ready, rather than showing an empty black picture. Closing only
 hides the window. Stop mirroring from your iPhone's Control Center to disconnect.
+While idle, the window uses a 9:18 phone-shaped canvas. Connecting follows the
+device's actual aspect ratio; disconnecting restores the default phone shape.
 
 Drag the title bar or picture to move the window. Resizing preserves the video
 aspect ratio, and rotating the phone fits the new orientation to your display
