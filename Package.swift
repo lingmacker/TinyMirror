@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MirrorDeck",
+    defaultLocalization: "en",
     platforms: [.macOS("26.0")],
     targets: [
         // Exposes native/include/mirror_bridge.h to Swift; the implementation
@@ -16,6 +17,7 @@ let package = Package(
             name: "MirrorDeck",
             dependencies: ["CMirrorBridge"],
             path: "Sources/MirrorDeck",
+            resources: [.process("Resources")],
             linkerSettings: [
                 // libMirrorCore.dylib is linked dynamically and kept replaceable
                 // (it holds all copyleft code — see licenses/NOTICE.md).

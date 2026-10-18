@@ -64,6 +64,14 @@ without cropping the picture.
 Choose **Keep Window on Top** in the menu bar to float the mirror above other
 applications. It is on by default, and your choice is remembered across launches.
 
+## Languages
+
+The app supports **English** and **Simplified Chinese**, following the macOS
+system/app language setting. Other languages fall back to English. Menu items,
+connection and error messages, accessibility descriptions, and the local network
+permission prompt are localized. Device names and the MirrorDeck name are unchanged.
+Restart the app after changing its language in System Settings.
+
 ## Known limitations
 
 Worth reading before you install — some of these are permanent.
@@ -107,10 +115,15 @@ Window layout and reconnect checks run without a phone or the native AirPlay lib
 
 ```sh
 mkdir -p .build/module-cache
-swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/Mirror{VideoView,WindowController}.swift scripts/check-window.swift -o .build/check-window
+swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController}.swift scripts/TestResources.swift scripts/check-window.swift -o .build/check-window
 .build/check-window              # add --snapshots for light/dark layouts with labeled synthetic content
 swiftc -module-cache-path .build/module-cache Sources/MirrorDeck/VideoPipeline.swift scripts/check-video.swift -o .build/check-video
 .build/check-video
+swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/Localization.swift scripts/TestResources.swift scripts/check-localizations.swift -o .build/check-localizations
+.build/check-localizations -AppleLanguages '(en)'
+.build/check-localizations -AppleLanguages '(zh-Hans)'
+.build/check-localizations -AppleLanguages '(fr)'  # English fallback
+.build/check-window -AppleLanguages '(zh-Hans)'   # Chinese layout and window behavior
 ```
 
 ### Distribution

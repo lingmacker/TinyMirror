@@ -3,8 +3,8 @@ import AppKit
 /// The app's idle presence: a single menu bar item, no Dock icon.
 final class StatusBarController {
     private let statusItem: NSStatusItem
-    private let stateItem = NSMenuItem(title: "Starting…", action: nil, keyEquivalent: "")
-    private let clientItem = NSMenuItem(title: "No device connected", action: nil, keyEquivalent: "")
+    private let stateItem = NSMenuItem(title: String(localized: "Starting…", bundle: .appLocalization), action: nil, keyEquivalent: "")
+    private let clientItem = NSMenuItem(title: String(localized: "No device connected", bundle: .appLocalization), action: nil, keyEquivalent: "")
     private let showItem: NSMenuItem
     private let onTopItem: NSMenuItem
 
@@ -31,15 +31,15 @@ final class StatusBarController {
             accessibilityDescription: "MirrorDeck")
         statusItem.button?.toolTip = "MirrorDeck"
 
-        showItem = NSMenuItem(title: "Show Mirror Window", action: #selector(showWindow), keyEquivalent: "m")
-        onTopItem = NSMenuItem(title: "Keep Window on Top", action: #selector(toggleOnTop), keyEquivalent: "t")
+        showItem = NSMenuItem(title: String(localized: "Show Mirror Window", bundle: .appLocalization), action: #selector(showWindow), keyEquivalent: "m")
+        onTopItem = NSMenuItem(title: String(localized: "Keep Window on Top", bundle: .appLocalization), action: #selector(toggleOnTop), keyEquivalent: "t")
 
         let menu = NSMenu()
         stateItem.isEnabled = false
         clientItem.isEnabled = false
         showItem.target = self
         onTopItem.target = self
-        let quitItem = NSMenuItem(title: "Quit MirrorDeck", action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: String(localized: "Quit MirrorDeck", bundle: .appLocalization), action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
 
         menu.addItem(stateItem)
@@ -103,7 +103,9 @@ final class StatusBarController {
     }
 
     func setClient(_ name: String?) {
-        clientItem.title = name.map { "Mirroring: \($0)" } ?? "No device connected"
+        clientItem.title = name.map {
+            String.localizedStringWithFormat(String(localized: "Mirroring: %@", bundle: .appLocalization), $0)
+        } ?? String(localized: "No device connected", bundle: .appLocalization)
         statusItem.button?.image = NSImage(
             systemSymbolName: name != nil ? "iphone.gen3.radiowaves.left.and.right" : "iphone.gen3",
             accessibilityDescription: "MirrorDeck")

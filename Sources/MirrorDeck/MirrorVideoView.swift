@@ -13,8 +13,8 @@ final class MirrorVideoView: NSView {
         displayLayer.backgroundColor = NSColor.black.cgColor
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
-        setAccessibilityLabel("Mirrored device screen")
-        setAccessibilityHelp("Escape exits full screen.")
+        setAccessibilityLabel(String(localized: "Mirrored device screen", bundle: .appLocalization))
+        setAccessibilityHelp(String(localized: "Escape exits full screen.", bundle: .appLocalization))
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }

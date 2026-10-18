@@ -60,10 +60,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let started = receiver.start(name: name, debug: AppDelegate.debugEnabled)
         windowController.setReceiverState(name: name, isRunning: started)
         if started {
-            statusBar.setReceiverState("Visible as “\(name)”")
+            statusBar.setReceiverState(String.localizedStringWithFormat(String(localized: "Visible as “%@”", bundle: .appLocalization), name))
             NSLog("[MirrorDeck] receiver started, advertising as “%@”", name)
         } else {
-            statusBar.setReceiverState("Receiver failed to start")
+            statusBar.setReceiverState(String(localized: "Receiver failed to start", bundle: .appLocalization))
             NSLog("[MirrorDeck] RECEIVER FAILED TO START")
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -84,19 +84,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.set(true, forKey: key)
 
         let alert = NSAlert()
-        alert.messageText = "MirrorDeck's menu bar icon is hidden behind the notch"
-        alert.informativeText = """
-            MirrorDeck is running, but your menu bar is full, so macOS placed \
-            its icon behind the camera notch where it cannot be seen or clicked.
-
-            Quit or hide one or two other menu bar apps and it will appear. You \
-            can then ⌘-drag it anywhere, and it will stay there.
-
-            Mirroring works either way — pick this Mac from Screen Mirroring on \
-            your iPhone and the window will open on its own.
-            """
+        alert.messageText = String(localized: "MirrorDeck's menu bar icon is hidden behind the notch", bundle: .appLocalization)
+        alert.informativeText = String(localized: "notch_warning_detail", bundle: .appLocalization)
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "OK", bundle: .appLocalization))
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
     }

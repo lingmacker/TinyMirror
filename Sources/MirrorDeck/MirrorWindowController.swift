@@ -7,7 +7,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     private let frameView = MirrorFrameView()
     var videoView: MirrorVideoView { frameView.videoView }
     private let waitingView = NSBox()
-    private let waitingTitle = NSTextField(labelWithString: "Ready to mirror")
+    private let waitingTitle = NSTextField(wrappingLabelWithString: String(localized: "Ready to mirror", bundle: .appLocalization))
     private let waitingHint = NSTextField(wrappingLabelWithString: "")
     private var receiverName = "MirrorDeck"
     private var receiverAvailable = true
@@ -75,16 +75,23 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         waitingHint.textColor = .secondaryLabelColor
         waitingHint.alignment = .center
         waitingTitle.alignment = .center
+        waitingTitle.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        waitingHint.setContentHuggingPriority(.defaultLow, for: .horizontal)
         let stack = NSStackView(views: [symbol, waitingTitle, waitingHint])
         stack.orientation = .vertical
+        stack.setHuggingPriority(.defaultLow, for: .horizontal)
         stack.spacing = 14
         stack.translatesAutoresizingMaskIntoConstraints = false
         waitingView.contentView!.addSubview(stack)
+        let preferredWidth = stack.widthAnchor.constraint(equalToConstant: 280)
+        preferredWidth.priority = .init(NSLayoutConstraint.Priority.defaultLow.rawValue + 1)
         NSLayoutConstraint.activate([
+            preferredWidth,
             stack.centerXAnchor.constraint(equalTo: waitingView.contentView!.centerXAnchor),
             stack.centerYAnchor.constraint(equalTo: waitingView.contentView!.centerYAnchor, constant: -16),
             stack.widthAnchor.constraint(lessThanOrEqualToConstant: 280),
             stack.widthAnchor.constraint(lessThanOrEqualTo: waitingView.widthAnchor, constant: -48),
+            waitingTitle.widthAnchor.constraint(equalTo: stack.widthAnchor),
             waitingHint.widthAnchor.constraint(equalTo: stack.widthAnchor),
         ])
     }
@@ -124,16 +131,18 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         waitingView.isHidden = playbackState == .mirroring
         switch playbackState {
         case .waiting:
-            waitingTitle.stringValue = "Ready to mirror"
-            waitingHint.stringValue = "On your iPhone, open Control Center → Screen Mirroring and choose “\(receiverName)”."
+            waitingTitle.stringValue = String(localized: "Ready to mirror", bundle: .appLocalization)
+            waitingHint.stringValue = String.localizedStringWithFormat(
+                String(localized: "On your iPhone, open Control Center → Screen Mirroring and choose “%@”.", bundle: .appLocalization),
+                receiverName)
         case .connecting:
-            waitingTitle.stringValue = "Waiting for your screen"
-            waitingHint.stringValue = "Keep Screen Mirroring enabled on your iPhone. The picture will appear here."
+            waitingTitle.stringValue = String(localized: "Waiting for your screen", bundle: .appLocalization)
+            waitingHint.stringValue = String(localized: "Keep Screen Mirroring enabled on your iPhone. The picture will appear here.", bundle: .appLocalization)
         case .mirroring:
             break
         case .unavailable:
-            waitingTitle.stringValue = "Unable to start mirroring"
-            waitingHint.stringValue = "Quit and reopen MirrorDeck to try again. Check that local network access is allowed in System Settings."
+            waitingTitle.stringValue = String(localized: "Unable to start mirroring", bundle: .appLocalization)
+            waitingHint.stringValue = String(localized: "Quit and reopen MirrorDeck to try again. Check that local network access is allowed in System Settings.", bundle: .appLocalization)
         }
     }
 

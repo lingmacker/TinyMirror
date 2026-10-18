@@ -29,6 +29,8 @@ echo "==> Assembling bundle"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$BIN_DIR/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
+cp -R "$BIN_DIR/MirrorDeck_MirrorDeck.bundle" "$APP/Contents/Resources/"
+cp -R packaging/en.lproj packaging/zh-Hans.lproj "$APP/Contents/Resources/"
 
 # All copyleft code ships as this replaceable shared library, never linked into
 # the app binary. Required for LGPL relinking — see licenses/NOTICE.md.

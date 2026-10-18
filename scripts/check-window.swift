@@ -1,5 +1,5 @@
 // Run from the repository root (no AirPlay library or phone required):
-// swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/Mirror{VideoView,WindowController}.swift scripts/check-window.swift -o .build/check-window
+// swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController}.swift scripts/TestResources.swift scripts/check-window.swift -o .build/check-window
 // .build/check-window [--snapshots]
 import AppKit
 import AVFoundation
@@ -157,7 +157,16 @@ struct WindowChecks {
         window.setFrameOrigin(NSPoint(x: awayX, y: window.frame.minY))
         assertButtonsFollowPointer(in: window)
         assert(controller.playbackState == .waiting)
+        let waiting = controller.videoView.subviews.first as! NSBox
+        let labels = (waiting.contentView!.subviews.first as! NSStackView).arrangedSubviews.compactMap { $0 as? NSTextField }
+        let language = Bundle.preferredLocalizations(from: ["en", "zh-Hans"], forPreferences: Locale.preferredLanguages + ["en"]).first!
+        let chinese = language == "zh-Hans"
+        assert(labels[0].stringValue == (chinese ? "准备投屏" : "Ready to mirror"))
+        assert(labels[1].stringValue.contains("Alex’s Mac (MirrorDeck)"), "Device names must survive localized formatting")
+        print("UI localization: \(language)")
         window.contentView?.layoutSubtreeIfNeeded()
+        assert(abs(labels[1].alignmentRect(forFrame: labels[1].frame).width - min(280, controller.videoView.bounds.width - 48)) < 1,
+               "Localized instructions must use the available width instead of collapsing into a narrow column")
         try snapshot("waiting", window: window)
         controller.setReceiverState(name: "Alex’s Mac (MirrorDeck)", isRunning: false)
         assert(controller.playbackState == .unavailable)
