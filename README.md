@@ -5,7 +5,7 @@
 **Put your iPhone screen on your Mac over Wi-Fi.**
 
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey.svg)](#requirements)
+[![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-lightgrey.svg)](#requirements)
 [![Release](https://img.shields.io/github/v/release/egarl004/mirrordeck)](https://github.com/egarl004/mirrordeck/releases/latest)
 
 </div>
@@ -37,7 +37,7 @@ Then on your iPhone: **Control Center → Screen Mirroring → "‹your Mac› (
 
 | | |
 |---|---|
-| **macOS** | 14 (Sonoma) or later — Apple silicon or Intel |
+| **macOS** | 26 (Tahoe) or later — Apple silicon or Intel |
 | **iPhone** | Any iPhone on the same Wi-Fi network |
 | **For mirroring** | Nothing else. No phone-side install. |
 

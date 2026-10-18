@@ -19,7 +19,7 @@
 	<key>CFBundleVersion</key>
 	<string>__BUILD__</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>14.0</string>
+	<string>26.0</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<!-- Menu bar app: no Dock icon, no main window at launch. -->

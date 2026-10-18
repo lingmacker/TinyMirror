@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MirrorDeck",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS("26.0")],
     targets: [
         // Exposes native/include/mirror_bridge.h to Swift; the implementation
         // is linked from native/build/libMirrorCore.dylib (built by native/build.sh).

@@ -10,7 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release >/dev/null
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 >/dev/null
 cmake --build build -j"$(sysctl -n hw.ncpu)" --target mirrorcore
 
 # keep the SwiftPM-visible copy of the header in sync
