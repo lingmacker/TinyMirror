@@ -51,7 +51,8 @@ struct WindowTransitionChecks {
 
         for (name, width, height) in [
             ("idle", 0, 0), ("portrait", 1179, 2556), ("landscape", 2556, 1179),
-            ("rotate", 1179, 2556), ("disconnect", 1179, 2556)
+            ("rotate", 1179, 2556), ("disconnect", 1179, 2556),
+            ("stop", 1179, 2556), ("stop-entering", 1179, 2556), ("stop-exiting", 1179, 2556)
         ] {
             controller.setDeviceName(width == 0 ? nil : "Window transition test phone")
             if width > 0 { controller.setVideoDimensions(width: width, height: height) }
@@ -74,16 +75,49 @@ struct WindowTransitionChecks {
                 forName: NSWindow.didEnterFullScreenNotification, object: window, queue: .main) { _ in entered = true }
             let leave = NotificationCenter.default.addObserver(
                 forName: NSWindow.didExitFullScreenNotification, object: window, queue: .main) { _ in exited = true }
+            var stopOnEntry: NSObjectProtocol?
+            if name == "stop-entering" {
+                stopOnEntry = NotificationCenter.default.addObserver(
+                    forName: NSWindow.willEnterFullScreenNotification, object: window, queue: .main) { _ in
+                        DispatchQueue.main.async {
+                            controller.dismiss()
+                            controller.setDeviceName(nil)
+                        }
+                    }
+            }
             defer {
                 NotificationCenter.default.removeObserver(enter)
                 NotificationCenter.default.removeObserver(leave)
+                if let stopOnEntry { NotificationCenter.default.removeObserver(stopOnEntry) }
+            }
+            func verifyStopped() {
+                pump(until: { exited && !window.isVisible }, context: "\(name) dismiss")
+                require(!window.styleMask.contains(.fullScreen) && !frameView.isFullScreen,
+                        "Stopping must close the native full-screen Space before hiding")
+                requireSize(window.frame.size, NSSize(width: 370, height: 730))
+                controller.present()
+                pump(until: { app.isActive && window.isKeyWindow }, context: "\(name) reopen")
+                require(window.isVisible, "The receiver window must remain reusable after stopping")
+                print("Native full-screen stop passed: \(name)")
             }
             window.toggleFullScreen(nil)
+            if name == "stop-entering" {
+                verifyStopped()
+                continue
+            }
             pump(until: { entered }, context: "\(name) enter full screen")
             settle()
             require(window.styleMask.contains(.fullScreen) && frameView.isFullScreen,
                     "Native full screen did not complete")
             require(window.level == .normal, "Full screen must not keep the floating level")
+            if name == "stop" || name == "stop-exiting" {
+                if name == "stop-exiting" { window.toggleFullScreen(nil) }
+                controller.dismiss()
+                controller.dismiss()
+                controller.setDeviceName(nil)
+                verifyStopped()
+                continue
+            }
             let fullScreenFrame = window.frame
             if name == "rotate" {
                 controller.setVideoDimensions(width: 2556, height: 1179)

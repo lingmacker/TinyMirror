@@ -30,7 +30,7 @@ final class AirPlayReceiver {
     private init() {}
 
     @discardableResult
-    func start(name: String, resolution: MirrorResolution = .fullHD, debug: Bool = false) -> Bool {
+    func start(name: String, resolution: MirrorResolution = .quadHD, debug: Bool = false) -> Bool {
         guard !isRunning else { return true }
         var cbs = mb_callbacks_t()
         cbs.ctx = Unmanaged.passUnretained(self).toOpaque()

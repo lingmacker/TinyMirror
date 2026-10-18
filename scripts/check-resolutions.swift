@@ -13,7 +13,7 @@ struct ResolutionChecks {
         defer { defaults.setVolatileDomain(originalArguments, forName: UserDefaults.argumentDomain) }
         for value in [0, -1, 9999] {
             defaults.setVolatileDomain(["resolution": value], forName: UserDefaults.argumentDomain)
-            assert(Settings.resolution == .fullHD, "Unknown preferences must fall back to compatible 1080p")
+            assert(Settings.resolution == .quadHD, "Unknown preferences must fall back to the 2K default")
         }
         for resolution in MirrorResolution.allCases {
             defaults.setVolatileDomain(["resolution": resolution.rawValue], forName: UserDefaults.argumentDomain)
@@ -51,8 +51,18 @@ struct ResolutionChecks {
         statusBar.setVideoSize(width: 996, height: 2160, isH265: true)
         let actual = menu.items.first { $0.title.contains("996") }!
         assert(actual.title.contains(String.localizedStringWithFormat("%d", 2160)) && actual.title.contains("HEVC") && !actual.isHidden)
+        let stop = menu.items.first { $0.title == String(localized: "Stop Mirroring", bundle: .appLocalization) }!
+        var stops = 0
+        statusBar.onStopMirroring = { stops += 1 }
+        assert(!stop.isEnabled)
+        menu.performActionForItem(at: menu.index(of: stop))
+        assert(stops == 0, "An idle receiver must not offer a stop action")
+        statusBar.setClient("Test iPhone")
+        assert(stop.isEnabled)
+        menu.performActionForItem(at: menu.index(of: stop))
+        assert(stops == 1, "Stop must use the menu callback, not terminate the application")
         statusBar.setClient(nil)
-        assert(actual.isHidden)
+        assert(actual.isHidden && !stop.isEnabled)
         print("Resolution preferences, menu selection, live-stream guard and actual size checks passed")
     }
 }

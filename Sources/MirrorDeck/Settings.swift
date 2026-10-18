@@ -9,7 +9,7 @@ enum MirrorResolution: Int, CaseIterable {
         switch self {
         case .hd: return String(localized: "720p — Smooth", bundle: .appLocalization)
         case .fullHD: return String(localized: "1080p — Compatible", bundle: .appLocalization)
-        case .quadHD: return String(localized: "1440p — HEVC", bundle: .appLocalization)
+        case .quadHD: return String(localized: "2K (1440p) — HEVC", bundle: .appLocalization)
         case .ultraHD: return String(localized: "4K — HEVC", bundle: .appLocalization)
         }
     }
@@ -29,7 +29,7 @@ enum Settings {
     }
 
     static var resolution: MirrorResolution {
-        get { MirrorResolution(rawValue: defaults.integer(forKey: "resolution")) ?? .fullHD }
+        get { MirrorResolution(rawValue: defaults.integer(forKey: "resolution")) ?? .quadHD }
         set { defaults.set(newValue.rawValue, forKey: "resolution") }
     }
 

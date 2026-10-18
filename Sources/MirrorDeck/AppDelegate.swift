@@ -12,6 +12,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         wireVideo()
         wireUI()
         startReceiver()
+        if ProcessInfo.processInfo.environment["MIRRORDECK_PREVIEW"] == "1" {
+            windowController.present()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -41,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func wireUI() {
         statusBar.onShowWindow = { [weak self] in self?.windowController.present() }
+        statusBar.onStopMirroring = { [weak self] in self?.stopMirroring() }
         statusBar.onQuit = { NSApp.terminate(nil) }
         statusBar.onToggleAlwaysOnTop = { [weak self] on in
             self?.setAlwaysOnTop(on)
@@ -54,6 +58,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Settings.alwaysOnTop = on
         windowController.isAlwaysOnTop = on
         statusBar.setAlwaysOnTop(on)
+    }
+
+    private func stopMirroring() {
+        guard clientConnected else { return }
+        receiver.stop()
+        clearMirroringState()
+        startReceiver()
+    }
+
+    private func clearMirroringState() {
+        clientConnected = false
+        statusBar.setResolutionEnabled(true)
+        statusBar.setClient(nil)
+        windowController.dismiss()
+        windowController.setDeviceName(nil)
+        pipeline.reset()
     }
 
     private func setResolution(_ resolution: MirrorResolution) {
@@ -85,9 +105,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if self.statusBar.isHiddenBehindNotch { self.warnIconHidden() }
         }
 
-        if ProcessInfo.processInfo.environment["MIRRORDECK_PREVIEW"] == "1" {
-            windowController.present()
-        }
     }
 
     /// Shown once: an invisible menu bar item otherwise looks like a failed launch.
@@ -117,12 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             statusBar.setClient(displayName)
             windowController.setDeviceName(displayName)
         case .disconnected:
-            clientConnected = false
-            statusBar.setResolutionEnabled(true)
-            statusBar.setClient(nil)
-            windowController.dismiss()
-            windowController.setDeviceName(nil)
-            pipeline.reset()
+            clearMirroringState()
         case .videoFlush:
             pipeline.flush()
         case .connReset:

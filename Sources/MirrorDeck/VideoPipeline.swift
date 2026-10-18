@@ -11,6 +11,8 @@ final class VideoPipeline {
     static let debugEnabled = ProcessInfo.processInfo.environment["MIRRORDECK_DEBUG"] == "1"
 
     private let queue = DispatchQueue(label: "mirrordeck.video", qos: .userInteractive)
+    private let generationLock = NSLock()
+    private var generation = 0
     private var formatDescription: CMVideoFormatDescription?
     private var isH265 = false
     private var vps: Data?
@@ -22,9 +24,11 @@ final class VideoPipeline {
     /// Safe to call from any thread; copies the frame and processes async.
     func handleAccessUnit(_ bytes: UnsafePointer<UInt8>, _ length: Int, isH265: Bool = false) {
         guard length > 0 else { return }
+        let generation = generationLock.withLock { self.generation }
         let data = Data(bytes: bytes, count: length)
         queue.async { [weak self] in
-            self?.process(data, isH265: isH265)
+            guard let self, self.generationLock.withLock({ self.generation }) == generation else { return }
+            self.process(data, isH265: isH265, generation: generation)
         }
     }
 
@@ -35,6 +39,7 @@ final class VideoPipeline {
     }
 
     func reset() {
+        generationLock.withLock { generation += 1 }
         queue.async { [weak self] in
             guard let self else { return }
             self.displayLayer?.sampleBufferRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
@@ -49,7 +54,7 @@ final class VideoPipeline {
 
     // MARK: - Parsing
 
-    private func process(_ frame: Data, isH265: Bool) {
+    private func process(_ frame: Data, isH265: Bool, generation: Int) {
         if self.isH265 != isH265 {
             self.isH265 = isH265
             formatDescription = nil
@@ -97,7 +102,7 @@ final class VideoPipeline {
         }
 
         if parameterSetsChanged || formatDescription == nil {
-            rebuildFormatDescription()
+            rebuildFormatDescription(generation: generation)
         }
         guard let formatDescription, !vclUnits.isEmpty else { return }
         guard let sampleBuffer = makeSampleBuffer(vclUnits, format: formatDescription) else { return }
@@ -114,7 +119,7 @@ final class VideoPipeline {
         layer.enqueue(sampleBuffer)
     }
 
-    private func rebuildFormatDescription() {
+    private func rebuildFormatDescription(generation: Int) {
         guard let sps, let pps else { return }
         var format: CMVideoFormatDescription?
         let status = sps.withUnsafeBytes { spsPtr -> OSStatus in
@@ -164,7 +169,8 @@ final class VideoPipeline {
             lastReportedSize = size
             let h265 = isH265
             DispatchQueue.main.async { [weak self] in
-                self?.onDimensions?(size.0, size.1, h265)
+                guard let self, self.generationLock.withLock({ self.generation }) == generation else { return }
+                self.onDimensions?(size.0, size.1, h265)
             }
         }
     }

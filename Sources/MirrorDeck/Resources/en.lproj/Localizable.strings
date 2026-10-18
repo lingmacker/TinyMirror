@@ -1,6 +1,7 @@
 "Starting…" = "Starting…";
 "No device connected" = "No device connected";
 "Show Mirror Window" = "Show Mirror Window";
+"Stop Mirroring" = "Stop Mirroring";
 "Keep Window on Top" = "Keep Window on Top";
 "Quit MirrorDeck" = "Quit MirrorDeck";
 "Visible as “%@”" = "Visible as “%@”";
@@ -19,7 +20,7 @@
 "OK" = "OK";
 "720p — Smooth" = "720p — Smooth";
 "1080p — Compatible" = "1080p — Compatible";
-"1440p — HEVC" = "1440p — HEVC";
+"2K (1440p) — HEVC" = "2K (1440p) — HEVC";
 "4K — HEVC" = "4K — HEVC";
 "Resolution" = "Resolution";
 "Stop mirroring to change; reconnect to apply." = "Stop mirroring to change; reconnect to apply.";

@@ -56,6 +56,12 @@ struct WindowChecks {
         assert(frame.videoView.displayLayer.cornerRadius == (frame.isFullScreen ? 0 : MirrorFrameView.cornerRadius - inset))
     }
 
+    static func assertCentered(in window: NSWindow) {
+        let screen = window.screen!.visibleFrame
+        assert(abs(window.frame.midX - screen.midX) <= 1 && abs(window.frame.midY - screen.midY) <= 1,
+               "Newly shown mirrors must appear at the center of their screen")
+    }
+
     static func assertIdleWindow(in window: NSWindow) {
         assert(window.resizeIncrements == NSSize(width: 1, height: 1),
                "Idle sizing must preserve native resize increments for zoom/full-screen restoration")
@@ -143,6 +149,7 @@ struct WindowChecks {
         let frameView = window.contentView as! MirrorFrameView
         assertPictureFrame(in: window)
         assertIdleWindow(in: window)
+        assertCentered(in: window)
         assert(!window.isOpaque && window.hasShadow)
         assert(controller.windowWillResize(window, to: NSSize(width: 450, height: 620)) == NSSize(width: 450, height: 620))
         let screen = NSScreen.main!.visibleFrame
@@ -199,6 +206,7 @@ struct WindowChecks {
 
         controller.setReceiverState(name: "Alex’s Mac (MirrorDeck)", isRunning: true)
         controller.present()
+        assertCentered(in: window)
         assertButtonsFollowPointer(in: window)
         let awayX = NSEvent.mouseLocation.x < screen.midX ? screen.maxX - window.frame.width : screen.minX
         window.setFrameOrigin(NSPoint(x: awayX, y: window.frame.minY))
@@ -295,8 +303,10 @@ struct WindowChecks {
         assert(controller.playbackState == .waiting)
         assertIdleWindow(in: window)
         controller.dismiss()
+        window.setFrameOrigin(NSPoint(x: screen.minX + 10, y: screen.minY + 10))
         controller.present()
         assertIdleWindow(in: window)
+        assertCentered(in: window)
         controller.setDeviceName("Landscape iPhone")
         controller.setVideoDimensions(width: 2556, height: 1179)
         controller.setDeviceName(nil)

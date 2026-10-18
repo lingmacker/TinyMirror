@@ -47,6 +47,19 @@ struct VideoChecks {
             }
             assert(reports == expected, "HEVC must negotiate dimensions after codec changes and reconnects")
         }
-        print("H.264/HEVC format and reconnect checks passed")
+        let stopped = VideoPipeline()
+        var staleReports = 0
+        stopped.onDimensions = { _, _, _ in staleReports += 1 }
+        frame.withUnsafeBufferPointer { stopped.handleAccessUnit($0.baseAddress!, $0.count) }
+        stopped.reset()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        assert(staleReports == 0, "Stopping must invalidate already-queued size callbacks")
+        frame.withUnsafeBufferPointer { stopped.handleAccessUnit($0.baseAddress!, $0.count) }
+        let reconnectDeadline = Date().addingTimeInterval(2)
+        while staleReports < 1 && Date() < reconnectDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+        assert(staleReports == 1, "A new stream must still report its size after stopping")
+        print("H.264/HEVC format, stop and reconnect checks passed")
     }
 }

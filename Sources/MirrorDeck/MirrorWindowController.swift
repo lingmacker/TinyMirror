@@ -4,6 +4,7 @@ import AVFoundation
 final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     enum PlaybackState { case waiting, connecting, mirroring, unavailable }
     private enum ResizeAxis { case undecided, width, height }
+    private enum FullScreenTransition { case entering, exiting }
 
     // Sizes include the 5pt bezel; the idle picture itself uses a 9:18 ratio.
     private static let idleWindowSize = NSSize(width: 370, height: 730)
@@ -22,6 +23,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     private var firstFrameReady = false
     private var buttonTrackingArea: NSTrackingArea?
     private var liveResizeAxis: ResizeAxis?
+    private var fullScreenTransition: FullScreenTransition?
+    private var dismissAfterFullScreen = false
     private(set) var playbackState = PlaybackState.waiting
 
     init() {
@@ -53,7 +56,6 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             object: videoView.displayLayer)
         updatePlaybackState()
         resetIdleWindowSize()
-        window.center()
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
@@ -109,6 +111,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func setDeviceName(_ name: String?) {
+        if name != nil { dismissAfterFullScreen = false }
         if name != deviceName || name == nil { firstFrameReady = false }
         deviceName = name
         if name == nil {
@@ -215,7 +218,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     override func cancelOperation(_ sender: Any?) {
-        if window?.styleMask.contains(.fullScreen) == true {
+        if fullScreenTransition == nil, window?.styleMask.contains(.fullScreen) == true {
             window?.toggleFullScreen(nil)
         }
     }
@@ -241,7 +244,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         guard let window else { return }
         let center = window.isVisible
             ? NSPoint(x: window.frame.midX, y: window.frame.midY)
-            : NSPoint(x: screen.maxX - size.width / 2 - 48, y: screen.midY)
+            : NSPoint(x: screen.midX, y: screen.midY)
         let origin = NSPoint(
             x: max(screen.minX, min(center.x - size.width / 2, screen.maxX - size.width)),
             y: max(screen.minY, min(center.y - size.height / 2, screen.maxY - size.height)))
@@ -269,6 +272,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowWillEnterFullScreen(_ notification: Notification) {
+        fullScreenTransition = .entering
         fullScreenVideoSize = videoSize
         frameView.isFullScreen = true
         frameView.layoutSubtreeIfNeeded()
@@ -276,7 +280,21 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         window?.level = .normal
     }
 
+    func windowDidEnterFullScreen(_ notification: Notification) {
+        fullScreenTransition = nil
+        // AppKit releases its entry transition after this callback returns.
+        if dismissAfterFullScreen {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.dismissAfterFullScreen, self.fullScreenTransition == nil else { return }
+                self.window?.toggleFullScreen(nil)
+            }
+        }
+    }
+
+    func windowWillExitFullScreen(_ notification: Notification) { fullScreenTransition = .exiting }
+
     func windowDidExitFullScreen(_ notification: Notification) {
+        fullScreenTransition = nil
         frameView.isFullScreen = false
         frameView.layoutSubtreeIfNeeded()
         updateWindowLevel()
@@ -286,17 +304,37 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             setVideoDimensions(width: Int(videoSize.width), height: Int(videoSize.height))
         }
         refreshWindowButtons()
+        if dismissAfterFullScreen {
+            dismissAfterFullScreen = false
+            dismiss()
+        }
     }
 
     func windowDidFailToEnterFullScreen(_ window: NSWindow) {
+        fullScreenTransition = nil
         frameView.isFullScreen = false
         frameView.layoutSubtreeIfNeeded()
         updateWindowLevel()
         refreshWindowButtons()
+        if dismissAfterFullScreen {
+            dismissAfterFullScreen = false
+            dismiss()
+        }
+    }
+
+    func windowDidFailToExitFullScreen(_ window: NSWindow) {
+        fullScreenTransition = nil
+        dismissAfterFullScreen = false
+        refreshWindowButtons()
     }
 
     func present() {
+        dismissAfterFullScreen = false
         guard let window else { return }
+        if !window.isVisible, !frameView.isFullScreen, !window.styleMask.contains(.fullScreen),
+           let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame {
+            resizeWindow(to: window.frame.size, on: screen)
+        }
         if window.isMiniaturized { window.deminiaturize(nil) }
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(videoView)
@@ -305,7 +343,15 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func dismiss() {
-        window?.orderOut(nil)
+        guard let window else { return }
+        if frameView.isFullScreen || window.styleMask.contains(.fullScreen) {
+            // Leave the native Space before hiding, including when entry is still animating.
+            let shouldExit = !dismissAfterFullScreen && fullScreenTransition == nil
+            dismissAfterFullScreen = true
+            if shouldExit { window.toggleFullScreen(nil) }
+            return
+        }
+        window.orderOut(nil)
         setWindowButtonsVisible(false)
     }
 }

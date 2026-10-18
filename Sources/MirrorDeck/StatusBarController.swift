@@ -7,10 +7,12 @@ final class StatusBarController {
     private let clientItem = NSMenuItem(title: String(localized: "No device connected", bundle: .appLocalization), action: nil, keyEquivalent: "")
     private let showItem: NSMenuItem
     private let onTopItem: NSMenuItem
+    private let stopItem: NSMenuItem
     private let resolutionMenu = NSMenu()
     private let videoInfoItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
 
     var onShowWindow: (() -> Void)?
+    var onStopMirroring: (() -> Void)?
     var onQuit: (() -> Void)?
     var onToggleAlwaysOnTop: ((Bool) -> Void)?
     var onResolutionChange: ((MirrorResolution) -> Void)?
@@ -36,6 +38,10 @@ final class StatusBarController {
 
         showItem = NSMenuItem(title: String(localized: "Show Mirror Window", bundle: .appLocalization), action: #selector(showWindow), keyEquivalent: "m")
         onTopItem = NSMenuItem(title: String(localized: "Keep Window on Top", bundle: .appLocalization), action: #selector(toggleOnTop), keyEquivalent: "t")
+        stopItem = NSMenuItem(title: String(localized: "Stop Mirroring", bundle: .appLocalization), action: #selector(stopMirroring), keyEquivalent: "M")
+        stopItem.keyEquivalentModifierMask = [.command, .shift]
+        stopItem.target = self
+        stopItem.isEnabled = false
 
         let menu = NSMenu()
         stateItem.isEnabled = false
@@ -52,6 +58,7 @@ final class StatusBarController {
         menu.addItem(videoInfoItem)
         menu.addItem(.separator())
         menu.addItem(showItem)
+        menu.addItem(stopItem)
         menu.addItem(onTopItem)
         let resolutionItem = NSMenuItem(title: String(localized: "Resolution", bundle: .appLocalization), action: nil, keyEquivalent: "")
         resolutionMenu.autoenablesItems = false
@@ -151,6 +158,7 @@ final class StatusBarController {
     }
 
     func setClient(_ name: String?) {
+        stopItem.isEnabled = name != nil
         if name == nil { videoInfoItem.isHidden = true }
         clientItem.title = name.map {
             String.localizedStringWithFormat(String(localized: "Mirroring: %@", bundle: .appLocalization), $0)
@@ -158,6 +166,11 @@ final class StatusBarController {
         statusItem.button?.image = NSImage(
             systemSymbolName: name != nil ? "iphone.gen3.radiowaves.left.and.right" : "iphone.gen3",
             accessibilityDescription: "MirrorDeck")
+    }
+
+    @objc private func stopMirroring() {
+        guard stopItem.isEnabled else { return }
+        onStopMirroring?()
     }
 
     @objc private func showWindow() { onShowWindow?() }

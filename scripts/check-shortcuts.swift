@@ -15,6 +15,7 @@ struct ShortcutChecks {
         var toggles: [Bool] = []
         var shows = 0
         var quits = 0
+        var stops = 0
         statusBar.onToggleAlwaysOnTop = { on in
             toggles.append(on)
             controller.isAlwaysOnTop = on
@@ -25,6 +26,7 @@ struct ShortcutChecks {
             controller.present()
         }
         statusBar.onQuit = { quits += 1 }
+        statusBar.onStopMirroring = { stops += 1 }
         statusBar.setAlwaysOnTop(true)
         controller.isAlwaysOnTop = true
         controller.present()
@@ -39,9 +41,9 @@ struct ShortcutChecks {
                "The mirror must be active (active: \(app.isActive), key: \(window.isKeyWindow))")
         assert(window.firstResponder === controller.videoView)
 
-        func press(_ key: String, code: UInt16) {
+        func press(_ key: String, code: UInt16, modifiers: NSEvent.ModifierFlags = [.command]) {
             let event = NSEvent.keyEvent(
-                with: .keyDown, location: .zero, modifierFlags: [.command],
+                with: .keyDown, location: .zero, modifierFlags: modifiers,
                 timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
                 context: nil, characters: key, charactersIgnoringModifiers: key,
                 isARepeat: false, keyCode: code)!
@@ -59,6 +61,14 @@ struct ShortcutChecks {
         press("m", code: 46)
         assert(shows == 1 && window.isVisible && !window.isMiniaturized,
                "Command-M must show the mirror, not minimize it")
+        press("M", code: 46, modifiers: [.command, .shift])
+        assert(stops == 0, "An idle mirror must not handle the stop shortcut")
+        statusBar.setClient("Shortcut test iPhone")
+        press("M", code: 46, modifiers: [.command, .shift])
+        assert(stops == 1 && shows == 1, "Command-Shift-M must stop, not show or minimize the mirror")
+        statusBar.setClient(nil)
+        press("M", code: 46, modifiers: [.command, .shift])
+        assert(stops == 1, "Disconnecting must disable the stop shortcut")
         press("q", code: 12)
         assert(quits == 1, "Command-Q must invoke the menu's quit callback")
         controller.dismiss()

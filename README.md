@@ -55,7 +55,11 @@ the buttons available. **Escape** exits full screen.
 Choose **Show Mirror Window** in the menu bar even before connecting to see
 connection instructions. The waiting screen stays until the first video frame
 is actually ready, rather than showing an empty black picture. Closing only
-hides the window. Stop mirroring from your iPhone's Control Center to disconnect.
+hides the window. Choose **Stop Mirroring** in the menu bar, or stop mirroring
+from your iPhone's Control Center, to disconnect. The menu action clears and
+hides the picture (leaving full screen first), then makes the receiver available
+again without quitting MirrorDeck. A newly shown mirror opens in the center of
+its screen; moving or resizing a visible window does not force it back there.
 While idle, the window uses a 9:18 phone-shaped canvas. Connecting follows the
 device's actual aspect ratio; disconnecting restores the default phone shape.
 
@@ -66,13 +70,13 @@ without cropping the picture.
 Choose **Keep Window on Top** in the menu bar to float the mirror above other
 applications. It is on by default, and your choice is remembered across launches.
 
-With the mirror window active, **⌘M** shows it, **⌘T** toggles always-on-top,
-and **⌘Q** quits MirrorDeck. These are app shortcuts, not global hotkeys.
+With the mirror window active, **⌘M** shows it, **⌘⇧M** stops mirroring,
+**⌘T** toggles always-on-top, and **⌘Q** quits MirrorDeck. These are app shortcuts, not global hotkeys.
 
 ## Resolution and picture quality
 
-Choose **Resolution** in the menu bar: **720p**, **1080p** (the compatible default),
-**1440p**, or **4K**. Stop mirroring before changing it, then reconnect from the
+Choose **Resolution** in the menu bar: **720p**, **1080p**, **2K (1440p)** (the default),
+or **4K**. A previously saved choice is kept. Stop mirroring before changing it, then reconnect from the
 iPhone. The choice is remembered; changing it while idle restarts the receiver.
 1440p and 4K enable HEVC alongside H.264. They need a compatible sender and a
 strong network; they are requests, not guarantees. The menu shows the actual
