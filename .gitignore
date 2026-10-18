@@ -8,6 +8,9 @@ native/build/
 # Third-party sources — fetched by scripts/bootstrap.sh at pinned commits
 vendor/
 
+# Local editor settings
+.vscode/
+
 # Xcode / SwiftPM
 *.xcuserstate
 xcuserdata/

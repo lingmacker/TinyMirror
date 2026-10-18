@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MirrorDeck — iPhone screen mirroring for Mac</title>
-<meta name="description" content="Mirror your iPhone screen to your Mac over Wi-Fi and control it with your mouse and keyboard. Free, open source, notarized. No phone-side install for mirroring.">
+<meta name="description" content="Mirror your iPhone screen to your Mac over Wi-Fi. Free and open source. No phone-side install.">
 <link rel="canonical" href="https://egarl004.github.io/mirrordeck/">
 <meta name="theme-color" content="#0F1318">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -12,12 +12,12 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MirrorDeck">
 <meta property="og:title" content="MirrorDeck — iPhone screen mirroring for Mac">
-<meta property="og:description" content="Mirror your iPhone to your Mac over Wi-Fi and control it with your mouse and keyboard. Free and open source.">
+<meta property="og:description" content="Mirror your iPhone to your Mac over Wi-Fi. Free and open source.">
 <meta property="og:url" content="https://egarl004.github.io/mirrordeck/">
 <meta property="og:image" content="https://egarl004.github.io/mirrordeck/preview.svg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MirrorDeck — iPhone screen mirroring for Mac">
-<meta name="twitter:description" content="Mirror your iPhone to your Mac over Wi-Fi and control it with your mouse and keyboard. Free and open source.">
+<meta name="twitter:description" content="Mirror your iPhone to your Mac over Wi-Fi. Free and open source.">
 <meta name="twitter:image" content="https://egarl004.github.io/mirrordeck/preview.svg">
 
 <script type="application/ld+json">
@@ -27,7 +27,7 @@
   "name": "MirrorDeck",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "macOS 14 or later",
-  "description": "Mirror an iPhone screen to a Mac over Wi-Fi and control the device with a mouse and keyboard.",
+  "description": "Mirror an iPhone screen to a Mac over Wi-Fi.",
   "url": "https://egarl004.github.io/mirrordeck/",
   "downloadUrl": "https://github.com/egarl004/mirrordeck/releases/latest/download/MirrorDeck.dmg",
   "softwareVersion": "0.2.0",
@@ -247,8 +247,8 @@ footer a { color: var(--ink-soft); }
       <h1>Your iPhone, on your Mac.</h1>
       <p class="lede">
         MirrorDeck turns your Mac into a wireless screen-mirroring target. Pick it
-        from Control Center and your phone appears in a window — then reach in and
-        use it with your mouse and keyboard.
+        from Control Center and your phone appears in a native macOS window.
+        No cables, no phone-side installation.
       </p>
       <div class="cta-row">
         <a class="btn btn-primary"
@@ -271,9 +271,9 @@ footer a { color: var(--ink-soft); }
       <p class="meta-line">Free · macOS 14+ · Apple silicon &amp; Intel · 4.4 MB · signed &amp; notarized</p>
     </div>
 
-    <!-- Phone mirrors to Mac; control travels back the other way. -->
+    <!-- One-way screen mirroring from iPhone to Mac. -->
     <svg class="figure" viewBox="0 0 640 400" role="img"
-         aria-label="An iPhone streaming its screen to a Mac laptop, with control commands travelling back from the Mac to the phone.">
+         aria-label="An iPhone streaming its screen wirelessly to a Mac laptop.">
       <!-- Mac -->
       <rect x="286" y="86" width="330" height="208" rx="11" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/>
       <rect x="298" y="98" width="306" height="184" rx="5" fill="var(--surface-2)"/>
@@ -310,24 +310,16 @@ footer a { color: var(--ink-soft); }
       <text x="196" y="146" font-family="IBM Plex Mono, monospace" font-size="10.5"
             letter-spacing="1.4" fill="var(--ink-soft)">SCREEN</text>
 
-      <!-- control travelling back -->
-      <g stroke="var(--accent)" stroke-width="2.2" fill="none" stroke-linecap="round">
-        <path d="M262 262H190" stroke-dasharray="5 6"/>
-        <path d="M199 255l-9 7 9 7"/>
-      </g>
-      <text x="196" y="286" font-family="IBM Plex Mono, monospace" font-size="10.5"
-            letter-spacing="1.4" fill="var(--accent)">CONTROL</text>
     </svg>
   </section>
 </div>
 
 <div class="wrap">
   <section class="band" id="what">
-    <h2>Two directions, two mechanisms</h2>
+    <h2>Just your screen, without the cables</h2>
     <p class="sub measure">
-      Video comes off the phone the same way an Apple TV receives it. Control is a
-      separate channel travelling the other way — which is why one works instantly
-      and the other asks something of you.
+      Your Mac receives the phone’s screen over AirPlay, just like an Apple TV.
+      MirrorDeck is display-only; your input stays on your Mac.
     </p>
     <div class="pair">
       <article class="card">
@@ -336,18 +328,17 @@ footer a { color: var(--ink-soft); }
         <p>
           Your Mac advertises itself on the network. Open Control Center on your
           iPhone, tap Screen Mirroring, pick your Mac, and the screen shows up in a
-          device-shaped window — hardware-decoded, about one frame of latency.
+          native macOS window with hardware-decoded video.
           Nothing to install on the phone.
         </p>
       </article>
       <article class="card">
-        <span class="tag warn">Requires setup</span>
-        <h3>Control</h3>
+        <span class="tag">Native window</span>
+        <h3>A clear view</h3>
         <p>
-          Click to tap, drag to swipe, scroll to scroll, type to type. Arrow keys
-          move between home screens. It drives the real device, not a simulator —
-          but iOS only permits this through Apple's own testing tools, so it needs
-          Xcode and a developer account.
+          Resize without stretching the picture, switch to full screen, or pin
+          the window above your other apps. The window follows your phone’s
+          orientation and fits within your display.
         </p>
       </article>
     </div>
@@ -370,8 +361,8 @@ footer a { color: var(--ink-soft); }
       </div>
       <div class="step">
         <div>
-          <h3>Your input travels back</h3>
-          <p>Mouse and keyboard events become real touches on the device, sent over a second connection to a helper running on the phone.</p>
+          <h3>Make room for your screen</h3>
+          <p>Move, resize, or pin the mirror window. Use your iPhone normally; MirrorDeck only displays its screen.</p>
         </div>
       </div>
     </div>
@@ -379,32 +370,19 @@ footer a { color: var(--ink-soft); }
 
   <section class="band" id="requirements">
     <h2>What you need</h2>
-    <p class="sub measure">Mirroring asks for very little. Control asks for more, and it is worth knowing before you download.</p>
+    <p class="sub measure">A Mac, an iPhone, and the same Wi-Fi network.</p>
     <dl class="specs">
       <div class="spec"><dt>macOS</dt><dd>14 (Sonoma) or later, Apple silicon or Intel.</dd></div>
       <div class="spec"><dt>iPhone</dt><dd>Any iPhone on the same Wi-Fi network. Nothing to install for mirroring.</dd></div>
       <div class="spec"><dt>Network</dt><dd>Both devices on the same network. Your Mac may ask for local network permission the first time.</dd></div>
-      <div class="spec"><dt>For control only</dt><dd>Xcode and your own Apple Developer account. You build and launch WebDriverAgent on the phone once — iOS offers no other way for a Mac to send touches, and there is no App Store route for it.</dd></div>
     </dl>
-    <p class="note">
-      <strong>Mirroring works for anyone. Control is realistically for developers.</strong>
-      If you do not already have Xcode installed, treat MirrorDeck as a mirroring
-      tool and the control features as a bonus you may never turn on.
-    </p>
+    <p class="note">Video only — audio playback is not currently supported.</p>
   </section>
 
   <section class="band" id="install">
     <h2>Getting started</h2>
     <p class="sub measure">Download, drag to Applications, open. MirrorDeck lives in the menu bar — there is no main window until a phone connects.</p>
-    <pre class="code"><span class="c"># Optional: enabling control, once per phone</span>
-<span class="p">$</span> git clone https://github.com/egarl004/mirrordeck.git
-<span class="p">$</span> cd mirrordeck &amp;&amp; ./scripts/bootstrap.sh
-<span class="p">$</span> ./scripts/wda.sh install   <span class="c"># builds and installs the helper</span>
-<span class="p">$</span> ./scripts/wda.sh run       <span class="c"># leave running while you control</span></pre>
-    <p class="note">
-      Then hover the top edge of the mirror window, click <strong>Enable Control</strong>,
-      and enter the phone's IP. It is remembered per device and reconnects next time.
-    </p>
+    <p class="note">On your iPhone, open <strong>Control Center → Screen Mirroring</strong> and choose your Mac. Allow local network access on the Mac if prompted.</p>
   </section>
 
   <section class="band" id="source">
@@ -412,8 +390,7 @@ footer a { color: var(--ink-soft); }
     <p class="sub measure">
       MirrorDeck is released under the GPL-3.0. You can read every line, build it
       yourself, change it, and pass it on. It is built on the work of the UxPlay
-      project, whose AirPlay implementation made it possible, and on Appium's
-      WebDriverAgent for touch input.
+      project, whose AirPlay implementation made it possible.
     </p>
     <div class="cta-row">
       <a class="btn btn-ghost" href="https://github.com/egarl004/mirrordeck">Read the source</a>

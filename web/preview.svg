@@ -4,7 +4,7 @@
     <text x="80" y="250" fill="#E9A13B" font-size="22" letter-spacing="4">MACOS · FREE &amp; OPEN SOURCE</text>
     <text x="80" y="336" fill="#E7EBEF" font-size="72" font-weight="bold">Your iPhone,</text>
     <text x="80" y="416" fill="#E7EBEF" font-size="72" font-weight="bold">on your Mac.</text>
-    <text x="80" y="474" fill="#98A2AE" font-size="26">Wireless screen mirroring, with mouse and keyboard control.</text>
+    <text x="80" y="474" fill="#98A2AE" font-size="26">Wireless screen mirroring. No cables, no phone-side install.</text>
   </g>
   <!-- phone -->
   <rect x="792" y="176" width="126" height="248" rx="26" fill="#E7EBEF"/>

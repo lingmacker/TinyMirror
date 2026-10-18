@@ -40,6 +40,7 @@ final class VideoPipeline {
             self.formatDescription = nil
             self.sps = nil
             self.pps = nil
+            self.lastReportedSize = (0, 0) // A reconnect must reopen even at the same resolution.
         }
     }
 
