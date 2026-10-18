@@ -25,10 +25,12 @@ final class AirPlayReceiver {
     var onLog: ((Int, String) -> Void)?
 
     private(set) var isRunning = false
+    private let eventLock = NSLock()
+    private var eventGeneration = 0
     private init() {}
 
     @discardableResult
-    func start(name: String, debug: Bool = false) -> Bool {
+    func start(name: String, resolution: MirrorResolution = .fullHD, debug: Bool = false) -> Bool {
         guard !isRunning else { return true }
         var cbs = mb_callbacks_t()
         cbs.ctx = Unmanaged.passUnretained(self).toOpaque()
@@ -51,14 +53,18 @@ final class AirPlayReceiver {
             let receiver = Unmanaged<AirPlayReceiver>.fromOpaque(ctx).takeUnretainedValue()
             receiver.onLog?(Int(level), String(cString: msg))
         }
-        let result = mb_start(name, &cbs, debug ? 1 : 0)
+        let result = mb_start_video(name, &cbs, debug ? 1 : 0,
+                                    Int32(resolution.width), Int32(resolution.rawValue), resolution.usesHEVC ? 1 : 0)
         isRunning = result == 0
+        if !isRunning { eventLock.withLock { eventGeneration += 1 } }
         return isRunning
     }
 
     func stop() {
         guard isRunning else { return }
         mb_stop()
+        // Stop joins native callbacks; invalidate their queued UI events before restarting.
+        eventLock.withLock { eventGeneration += 1 }
         isRunning = false
     }
 
@@ -84,8 +90,10 @@ final class AirPlayReceiver {
         default: mapped = nil
         }
         if let mapped {
+            let generation = eventLock.withLock { eventGeneration }
             DispatchQueue.main.async { [weak self] in
-                self?.onEvent?(mapped)
+                guard let self, self.eventLock.withLock({ self.eventGeneration }) == generation else { return }
+                self.onEvent?(mapped)
             }
         }
     }

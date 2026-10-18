@@ -1,5 +1,5 @@
 // Run from the repository root; this temporarily opens native full-screen Spaces.
-// swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController,StatusBarController}.swift scripts/TestResources.swift scripts/check-window-transitions.swift -o .build/check-window-transitions
+// swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController,StatusBarController,Settings}.swift scripts/TestResources.swift scripts/check-window-transitions.swift -o .build/check-window-transitions
 // .build/check-window-transitions
 import AppKit
 import Darwin
@@ -13,7 +13,7 @@ struct WindowTransitionChecks {
         }
     }
 
-    static func pump(until condition: () -> Bool, timeout: TimeInterval = 6) {
+    static func pump(until condition: () -> Bool, timeout: TimeInterval = 6, context: String = "settling") {
         let deadline = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {
             if let event = NSApp.nextEvent(matching: .any, until: Date().addingTimeInterval(0.01),
@@ -21,7 +21,7 @@ struct WindowTransitionChecks {
                 NSApp.sendEvent(event)
             }
         }
-        require(condition(), "Native window transition timed out")
+        require(condition(), "Native window transition timed out: \(context)")
     }
 
     static func settle() {
@@ -56,7 +56,7 @@ struct WindowTransitionChecks {
             controller.setDeviceName(width == 0 ? nil : "Window transition test phone")
             if width > 0 { controller.setVideoDimensions(width: width, height: height) }
             controller.present()
-            pump(until: { app.isActive && window.isKeyWindow })
+            pump(until: { app.isActive && window.isKeyWindow }, context: "\(name) activation")
             settle()
             let originalSize = window.frame.size
 
@@ -79,7 +79,7 @@ struct WindowTransitionChecks {
                 NotificationCenter.default.removeObserver(leave)
             }
             window.toggleFullScreen(nil)
-            pump(until: { entered })
+            pump(until: { entered }, context: "\(name) enter full screen")
             settle()
             require(window.styleMask.contains(.fullScreen) && frameView.isFullScreen,
                     "Native full screen did not complete")
@@ -98,7 +98,7 @@ struct WindowTransitionChecks {
                 context: nil, characters: "\u{1b}", charactersIgnoringModifiers: "\u{1b}",
                 isARepeat: false, keyCode: 53)!
             app.sendEvent(escape)
-            pump(until: { exited })
+            pump(until: { exited }, context: "\(name) Escape exit")
             settle()
             require(!window.styleMask.contains(.fullScreen) && !frameView.isFullScreen,
                     "Escape failed to leave native full screen")

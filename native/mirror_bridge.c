@@ -107,8 +107,15 @@ static void derive_hw_addr(const char *seed, unsigned char out[6]) {
 /* ---- public API ------------------------------------------------------ */
 
 int mb_start(const char *name, const mb_callbacks_t *cbs, int debug_log) {
+    return mb_start_video(name, cbs, debug_log, 1920, 1080, 0);
+}
+
+int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug_log,
+                   int width, int height, int enable_hevc) {
     if (g_raop || g_dnssd) return -1;
-    if (!name || !cbs || !cbs->on_video || !cbs->on_audio) return -2;
+    if (!name || !cbs || !cbs->on_video || !cbs->on_audio ||
+        width < 1 || width > 9999 || height < 1 || height > 9999 ||
+        (enable_hevc != 0 && enable_hevc != 1)) return -2;
     memcpy(&g_cbs, cbs, sizeof(g_cbs));
 
     ntp_global_init();
@@ -131,7 +138,7 @@ int mb_start(const char *name, const mb_callbacks_t *cbs, int debug_log) {
     }
 
     /* Feature bits: same set uxplay advertises (mirroring, FairPlay, audio;
-     * no HLS, no H.265, no rotation). */
+     * no HLS or rotation; HEVC is requested only for higher-resolution presets). */
     dnssd_set_airplay_features(g_dnssd, 0, 0);
     dnssd_set_airplay_features(g_dnssd, 1, 1);
     dnssd_set_airplay_features(g_dnssd, 2, 1);
@@ -164,6 +171,7 @@ int mb_start(const char *name, const mb_callbacks_t *cbs, int debug_log) {
     dnssd_set_airplay_features(g_dnssd, 29, 0);
     dnssd_set_airplay_features(g_dnssd, 30, 1);
     dnssd_set_airplay_features(g_dnssd, 31, 0);
+    dnssd_set_airplay_features(g_dnssd, 42, enable_hevc);
 
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
@@ -205,6 +213,11 @@ int mb_start(const char *name, const mb_callbacks_t *cbs, int debug_log) {
         dnssd_destroy(g_dnssd);
         g_dnssd = NULL;
         return -5;
+    }
+
+    if (raop_set_plist(g_raop, "width", width) || raop_set_plist(g_raop, "height", height)) {
+        mb_stop();
+        return -7;
     }
 
     unsigned short tcp[3] = {0, 0, 0};

@@ -2,28 +2,29 @@ import Foundation
 import AVFoundation
 import CoreMedia
 
-/// Turns Annex-B H.264 access units from the receiver into CMSampleBuffers
-/// and enqueues them on an AVSampleBufferDisplayLayer (which hardware-decodes
-/// compressed H.264 itself — no explicit VTDecompressionSession needed).
+/// Packages Annex-B H.264/HEVC frames for AVSampleBufferDisplayLayer's native decoder.
 final class VideoPipeline {
     weak var displayLayer: AVSampleBufferDisplayLayer?
     /// Reported on the main thread whenever the coded video size changes.
-    var onDimensions: ((Int, Int) -> Void)?
+    var onDimensions: ((Int, Int, Bool) -> Void)?
 
     static let debugEnabled = ProcessInfo.processInfo.environment["MIRRORDECK_DEBUG"] == "1"
 
     private let queue = DispatchQueue(label: "mirrordeck.video", qos: .userInteractive)
     private var formatDescription: CMVideoFormatDescription?
+    private var isH265 = false
+    private var vps: Data?
     private var sps: Data?
     private var pps: Data?
     private var lastReportedSize: (Int, Int) = (0, 0)
     private var framesSeen = 0
 
     /// Safe to call from any thread; copies the frame and processes async.
-    func handleAccessUnit(_ bytes: UnsafePointer<UInt8>, _ length: Int) {
+    func handleAccessUnit(_ bytes: UnsafePointer<UInt8>, _ length: Int, isH265: Bool = false) {
+        guard length > 0 else { return }
         let data = Data(bytes: bytes, count: length)
         queue.async { [weak self] in
-            self?.process(data)
+            self?.process(data, isH265: isH265)
         }
     }
 
@@ -38,6 +39,8 @@ final class VideoPipeline {
             guard let self else { return }
             self.displayLayer?.sampleBufferRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
             self.formatDescription = nil
+            self.isH265 = false
+            self.vps = nil
             self.sps = nil
             self.pps = nil
             self.lastReportedSize = (0, 0) // A reconnect must reopen even at the same resolution.
@@ -46,30 +49,50 @@ final class VideoPipeline {
 
     // MARK: - Parsing
 
-    private func process(_ frame: Data) {
+    private func process(_ frame: Data, isH265: Bool) {
+        if self.isH265 != isH265 {
+            self.isH265 = isH265
+            formatDescription = nil
+            vps = nil
+            sps = nil
+            pps = nil
+            lastReportedSize = (0, 0)
+        }
         var vclUnits: [Data] = []
         var parameterSetsChanged = false
 
         let nals = VideoPipeline.splitAnnexB(frame)
         if VideoPipeline.debugEnabled && framesSeen < 5 {
-            let types = nals.map { String(($0.first ?? 0) & 0x1F) }.joined(separator: ",")
+            let types = nals.map { String(isH265 ? (($0.first ?? 0) >> 1) & 0x3F : ($0.first ?? 0) & 0x1F) }.joined(separator: ",")
             NSLog("[MirrorDeck] video frame %d: %d bytes, %d NAL(s), types=[%@]",
                   framesSeen, frame.count, nals.count, types)
         }
         framesSeen += 1
 
         for nal in nals {
-            guard let first = nal.first else { continue }
-            let nalType = first & 0x1F
-            switch nalType {
-            case 7:
-                if sps != nal { sps = nal; parameterSetsChanged = true }
-            case 8:
-                if pps != nal { pps = nal; parameterSetsChanged = true }
-            case 1, 5:
-                vclUnits.append(nal)
-            default:
-                break // SEI / AUD etc. are not needed for display
+            guard nal.count >= (isH265 ? 2 : 1), let first = nal.first else { continue }
+            if isH265 {
+                switch (first >> 1) & 0x3F {
+                case 32:
+                    if vps != nal { vps = nal; parameterSetsChanged = true }
+                case 33:
+                    if sps != nal { sps = nal; parameterSetsChanged = true }
+                case 34:
+                    if pps != nal { pps = nal; parameterSetsChanged = true }
+                case 0...31:
+                    vclUnits.append(nal)
+                default: break
+                }
+            } else {
+                switch first & 0x1F {
+                case 7:
+                    if sps != nal { sps = nal; parameterSetsChanged = true }
+                case 8:
+                    if pps != nal { pps = nal; parameterSetsChanged = true }
+                case 1, 5:
+                    vclUnits.append(nal)
+                default: break
+                }
             }
         }
 
@@ -101,6 +124,20 @@ final class VideoPipeline {
                     ppsPtr.bindMemory(to: UInt8.self).baseAddress!,
                 ]
                 let sizes: [Int] = [sps.count, pps.count]
+                if isH265 {
+                    guard let vps else { return kCMFormatDescriptionError_InvalidParameter }
+                    return vps.withUnsafeBytes { vpsPtr in
+                        let hevcPointers = [vpsPtr.bindMemory(to: UInt8.self).baseAddress!, pointers[0], pointers[1]]
+                        return CMVideoFormatDescriptionCreateFromHEVCParameterSets(
+                            allocator: kCFAllocatorDefault,
+                            parameterSetCount: 3,
+                            parameterSetPointers: hevcPointers,
+                            parameterSetSizes: [vps.count] + sizes,
+                            nalUnitHeaderLength: 4,
+                            extensions: nil,
+                            formatDescriptionOut: &format)
+                    }
+                }
                 return CMVideoFormatDescriptionCreateFromH264ParameterSets(
                     allocator: kCFAllocatorDefault,
                     parameterSetCount: 2,
@@ -125,8 +162,9 @@ final class VideoPipeline {
         let size = (Int(dims.width), Int(dims.height))
         if size != lastReportedSize {
             lastReportedSize = size
+            let h265 = isH265
             DispatchQueue.main.async { [weak self] in
-                self?.onDimensions?(size.0, size.1)
+                self?.onDimensions?(size.0, size.1, h265)
             }
         }
     }

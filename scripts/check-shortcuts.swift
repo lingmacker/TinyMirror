@@ -1,5 +1,5 @@
 // Run from the repository root (no AirPlay library or phone required):
-// swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController,StatusBarController}.swift scripts/TestResources.swift scripts/check-shortcuts.swift -o .build/check-shortcuts
+// swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController,StatusBarController,Settings}.swift scripts/TestResources.swift scripts/check-shortcuts.swift -o .build/check-shortcuts
 // .build/check-shortcuts
 import AppKit
 

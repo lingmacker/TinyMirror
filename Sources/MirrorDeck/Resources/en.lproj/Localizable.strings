@@ -17,3 +17,10 @@
 "MirrorDeck's menu bar icon is hidden behind the notch" = "MirrorDeck's menu bar icon is hidden behind the notch";
 "notch_warning_detail" = "MirrorDeck is running, but your menu bar is full, so macOS placed its icon behind the camera notch where it cannot be seen or clicked.\n\nQuit or hide one or two other menu bar apps and it will appear. You can then ⌘-drag it anywhere, and it will stay there.\n\nMirroring works either way — pick this Mac from Screen Mirroring on your iPhone and the window will open on its own.";
 "OK" = "OK";
+"720p — Smooth" = "720p — Smooth";
+"1080p — Compatible" = "1080p — Compatible";
+"1440p — HEVC" = "1440p — HEVC";
+"4K — HEVC" = "4K — HEVC";
+"Resolution" = "Resolution";
+"Stop mirroring to change; reconnect to apply." = "Stop mirroring to change; reconnect to apply.";
+"Actual stream: %d × %d (%@)" = "Actual stream: %d × %d (%@)";

@@ -7,10 +7,13 @@ final class StatusBarController {
     private let clientItem = NSMenuItem(title: String(localized: "No device connected", bundle: .appLocalization), action: nil, keyEquivalent: "")
     private let showItem: NSMenuItem
     private let onTopItem: NSMenuItem
+    private let resolutionMenu = NSMenu()
+    private let videoInfoItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
 
     var onShowWindow: (() -> Void)?
     var onQuit: (() -> Void)?
     var onToggleAlwaysOnTop: ((Bool) -> Void)?
+    var onResolutionChange: ((MirrorResolution) -> Void)?
     private static let autosaveName = "MirrorDeckStatusItem"
 
     init() {
@@ -44,9 +47,26 @@ final class StatusBarController {
 
         menu.addItem(stateItem)
         menu.addItem(clientItem)
+        videoInfoItem.isEnabled = false
+        videoInfoItem.isHidden = true
+        menu.addItem(videoInfoItem)
         menu.addItem(.separator())
         menu.addItem(showItem)
         menu.addItem(onTopItem)
+        let resolutionItem = NSMenuItem(title: String(localized: "Resolution", bundle: .appLocalization), action: nil, keyEquivalent: "")
+        resolutionMenu.autoenablesItems = false
+        for resolution in MirrorResolution.allCases {
+            let item = NSMenuItem(title: resolution.title, action: #selector(selectResolution(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = resolution.rawValue
+            resolutionMenu.addItem(item)
+        }
+        resolutionMenu.addItem(.separator())
+        let hint = NSMenuItem(title: String(localized: "Stop mirroring to change; reconnect to apply.", bundle: .appLocalization), action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        resolutionMenu.addItem(hint)
+        resolutionItem.submenu = resolutionMenu
+        menu.addItem(resolutionItem)
         menu.addItem(.separator())
         menu.addItem(quitItem)
         menu.autoenablesItems = false
@@ -63,6 +83,27 @@ final class StatusBarController {
     /// Reflects the current state in the menu's checkmark.
     func setAlwaysOnTop(_ on: Bool) {
         onTopItem.state = on ? .on : .off
+    }
+
+    func setResolution(_ resolution: MirrorResolution) {
+        for item in resolutionMenu.items where item.action != nil {
+            item.state = item.tag == resolution.rawValue ? .on : .off
+        }
+    }
+
+    func setResolutionEnabled(_ enabled: Bool) {
+        for item in resolutionMenu.items where item.action != nil { item.isEnabled = enabled }
+    }
+
+    func setVideoSize(width: Int, height: Int, isH265: Bool) {
+        videoInfoItem.title = String.localizedStringWithFormat(
+            String(localized: "Actual stream: %d × %d (%@)", bundle: .appLocalization), width, height, isH265 ? "HEVC" : "H.264")
+        videoInfoItem.isHidden = false
+    }
+
+    @objc private func selectResolution(_ sender: NSMenuItem) {
+        guard sender.isEnabled, let resolution = MirrorResolution(rawValue: sender.tag) else { return }
+        onResolutionChange?(resolution)
     }
 
     @objc private func toggleOnTop() {
@@ -110,6 +151,7 @@ final class StatusBarController {
     }
 
     func setClient(_ name: String?) {
+        if name == nil { videoInfoItem.isHidden = true }
         clientItem.title = name.map {
             String.localizedStringWithFormat(String(localized: "Mirroring: %@", bundle: .appLocalization), $0)
         } ?? String(localized: "No device connected", bundle: .appLocalization)

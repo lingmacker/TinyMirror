@@ -69,6 +69,21 @@ applications. It is on by default, and your choice is remembered across launches
 With the mirror window active, **⌘M** shows it, **⌘T** toggles always-on-top,
 and **⌘Q** quits MirrorDeck. These are app shortcuts, not global hotkeys.
 
+## Resolution and picture quality
+
+Choose **Resolution** in the menu bar: **720p**, **1080p** (the compatible default),
+**1440p**, or **4K**. Stop mirroring before changing it, then reconnect from the
+iPhone. The choice is remembered; changing it while idle restarts the receiver.
+1440p and 4K enable HEVC alongside H.264. They need a compatible sender and a
+strong network; they are requests, not guarantees. The menu shows the actual
+received pixel dimensions and codec while streaming.
+
+AirPlay uses the requested display height to negotiate the stream. For example,
+a portrait phone may send about 498×1080 for the 1080p preset, rather than a
+1920×1080 landscape picture. Enlarging that image cannot recover missing detail;
+a higher preset can help only if the phone actually sends more pixels. Bitrate
+and compression quality remain controlled by iOS.
+
 ## Languages
 
 The app supports **English** and **Simplified Chinese**, following the macOS
@@ -156,17 +171,17 @@ App-Specific Passwords.
 ## How it works
 
 ```
-iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP/H.264)──▶ libMirrorCore.dylib
-                                                                     │ decrypted Annex-B H.264
+iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP/H.264 or HEVC)──▶ libMirrorCore.dylib
+                                                                     │ decrypted Annex-B H.264/HEVC
                                                                      ▼
                                               Swift app: VideoPipeline ▶ AVSampleBufferDisplayLayer
 ```
 
 - **`native/`** — `mirror_bridge.c` wraps the vendored AirPlay protocol core
-  behind a two-function C API (`mb_start` / `mb_stop`), built as
+  behind a small C API (`mb_start_video`, compatible `mb_start`, and `mb_stop`), built as
   `libMirrorCore.dylib`. All third-party code lives here and nowhere else.
 - **`Sources/MirrorDeck/`** — the app: menu bar shell, native mirror window,
-  and H.264 → `AVSampleBufferDisplayLayer` pipeline (hardware decode).
+  and H.264/HEVC → `AVSampleBufferDisplayLayer` pipeline (native decode).
 - **`vendor/`** — [UxPlay](https://github.com/FDH2/UxPlay), fetched at a pinned
   commit by `scripts/bootstrap.sh` rather than committed.
 - **`web/`** — the project landing page.
@@ -174,7 +189,7 @@ iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP/H.264)──▶ libMi
 ## Roadmap
 
 - [ ] Audio playback (AAC-ELD decode via AudioToolbox)
-- [ ] H.265 support (feature bit 42 + HEVC format descriptions)
+- [x] H.265/HEVC support and selectable resolution requests
 
 Contributions welcome.
 
@@ -197,7 +212,7 @@ Third-party components, all confined to `libMirrorCore.dylib`:
 | libcrypto | OpenSSL 3 | Apache-2.0 |
 
 The LGPL relinking obligation is met structurally: those components live in a
-replaceable shared library exporting only `mb_start` and `mb_stop`, so anyone
+replaceable shared library exporting only the `mb_*` bridge API, so anyone
 can rebuild it with `./native/build.sh` and substitute their own build. See
 [licenses/NOTICE.md](licenses/NOTICE.md).
 

@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Created after NSApplication.run() so the menu bar item can be placed.
     private lazy var statusBar = StatusBarController()
     private let windowController = MirrorWindowController()
+    private var clientConnected = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         wireVideo()
@@ -20,11 +21,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func wireVideo() {
         pipeline.displayLayer = windowController.videoView.displayLayer
         receiver.onVideo = { [pipeline] data, length, isH265 in
-            guard !isH265 else { return } // H.265 not advertised; ignore defensively
-            pipeline.handleAccessUnit(data, length)
+            pipeline.handleAccessUnit(data, length, isH265: isH265)
         }
-        pipeline.onDimensions = { [weak self] width, height in
+        pipeline.onDimensions = { [weak self] width, height, isH265 in
             guard let self else { return }
+            self.statusBar.setVideoSize(width: width, height: height, isH265: isH265)
             self.windowController.setVideoDimensions(width: width, height: height)
             if self.windowController.window?.isVisible != true {
                 self.windowController.present()
@@ -44,6 +45,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.onToggleAlwaysOnTop = { [weak self] on in
             self?.setAlwaysOnTop(on)
         }
+        statusBar.onResolutionChange = { [weak self] resolution in self?.setResolution(resolution) }
+        statusBar.setResolution(Settings.resolution)
         setAlwaysOnTop(Settings.alwaysOnTop)
     }
 
@@ -53,11 +56,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.setAlwaysOnTop(on)
     }
 
+    private func setResolution(_ resolution: MirrorResolution) {
+        guard !clientConnected else { return }
+        guard resolution != Settings.resolution || !receiver.isRunning else { return }
+        Settings.resolution = resolution
+        statusBar.setResolution(resolution)
+        receiver.stop()
+        pipeline.reset()
+        startReceiver()
+    }
+
     static let debugEnabled = ProcessInfo.processInfo.environment["MIRRORDECK_DEBUG"] == "1"
 
     private func startReceiver() {
         let name = Settings.receiverName
-        let started = receiver.start(name: name, debug: AppDelegate.debugEnabled)
+        let started = receiver.start(name: name, resolution: Settings.resolution, debug: AppDelegate.debugEnabled)
         windowController.setReceiverState(name: name, isRunning: started)
         if started {
             statusBar.setReceiverState(String.localizedStringWithFormat(String(localized: "Visible as “%@”", bundle: .appLocalization), name))
@@ -94,11 +107,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func handleReceiverEvent(_ event: ReceiverEvent) {
         switch event {
+        case .connected:
+            clientConnected = true
+            statusBar.setResolutionEnabled(false)
         case .clientInfo(_, _, let name):
             let displayName = name.isEmpty ? "iPhone" : name
+            clientConnected = true
+            statusBar.setResolutionEnabled(false)
             statusBar.setClient(displayName)
             windowController.setDeviceName(displayName)
         case .disconnected:
+            clientConnected = false
+            statusBar.setResolutionEnabled(true)
             statusBar.setClient(nil)
             windowController.dismiss()
             windowController.setDeviceName(nil)

@@ -17,3 +17,10 @@
 "MirrorDeck's menu bar icon is hidden behind the notch" = "MirrorDeck 的菜单栏图标被刘海遮挡";
 "notch_warning_detail" = "MirrorDeck 正在运行，但菜单栏空间已满，macOS 将图标放在了摄像头刘海后面，因此无法看到或点击它。\n\n退出或隐藏一两个菜单栏应用，图标就会出现。之后可以按住 ⌘ 键拖动图标，调整后的位置会被记住。\n\n这不会影响投屏。在 iPhone 的“屏幕镜像”中选择这台 Mac，投屏窗口仍会自动打开。";
 "OK" = "好";
+"720p — Smooth" = "720p — 流畅";
+"1080p — Compatible" = "1080p — 兼容";
+"1440p — HEVC" = "1440p — HEVC";
+"4K — HEVC" = "4K — HEVC";
+"Resolution" = "投屏分辨率";
+"Stop mirroring to change; reconnect to apply." = "停止投屏后可切换，重新投屏生效。";
+"Actual stream: %d × %d (%@)" = "实际码流：%d × %d（%@）";

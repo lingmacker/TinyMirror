@@ -51,6 +51,12 @@ typedef struct {
  * Returns 0 on success, negative on failure. Only one instance may run. */
 int mb_start(const char *name, const mb_callbacks_t *cbs, int debug_log);
 
+/* Start with a requested display size (1...9999) and optional HEVC support.
+ * The client chooses the actual stream resolution. enable_hevc must be 0 or 1.
+ * mb_start remains the compatible 1920x1080 H.264 entry point. */
+int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug_log,
+                   int width, int height, int enable_hevc);
+
 /* Stop the receiver and unregister the Bonjour services. */
 void mb_stop(void);
 
