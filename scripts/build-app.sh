@@ -22,11 +22,7 @@ BIN_DIR="$(swift build "${SWIFT_ARGS[@]}" -c "$CONFIGURATION" --show-bin-path)"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$BIN_DIR/TinyMirror" "$APP/Contents/MacOS/"
-cp -R "$BIN_DIR/TinyMirror_TinyMirror.bundle" "$APP/Contents/Resources/"
-for language in en zh-Hans; do
-    mkdir -p "$APP/Contents/Resources/$language.lproj"
-    cp "$RESOURCES/$language.lproj/InfoPlist.strings" "$APP/Contents/Resources/$language.lproj/"
-done
+cp -R "$RESOURCES/en.lproj" "$RESOURCES/zh-Hans.lproj" "$APP/Contents/Resources/"
 cp native/build/libMirrorCore.dylib "$APP/Contents/Frameworks/"
 cp -R licenses "$APP/Contents/Resources/licenses"
 cp "$RESOURCES/Info.plist" "$APP/Contents/Info.plist"
@@ -35,8 +31,8 @@ plutil -replace CFBundleVersion -string "$BUILD_NUMBER" "$APP/Contents/Info.plis
 plutil -replace NSHumanReadableCopyright -string "$COPYRIGHT" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
-# Compile the native icon stack and its static .icns representation together.
-xcrun actool "$RESOURCES/AppIcon.icon" \
+# Compile app and menu bar artwork into the main bundle on every toolchain.
+xcrun actool "$RESOURCES/AppIcon.icon" "$RESOURCES/Assets.xcassets" \
     --compile "$APP/Contents/Resources" \
     --platform macosx --minimum-deployment-target 26.0 \
     --app-icon AppIcon --output-partial-info-plist .build/icon-info.plist \

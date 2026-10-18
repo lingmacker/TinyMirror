@@ -37,11 +37,15 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: ./scripts/package.sh
 
+      - name: Verify packaged app startup
+        run: python3 scripts/check-app.py dist/TinyMirror.app
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
           RELEASE_NOTES: |
+            - 修复下载版因资源路径错误导致的启动崩溃与菜单栏图标缺失。
             - 通过 Wi-Fi 将 iPhone 屏幕投射到 Mac，无需安装手机端 App。
             - 支持窗口置顶、全屏和旋转适配，可选 720p、1080p、2K、4K 分辨率。
             - 原生菜单栏操作，支持简体中文和英文。

@@ -31,7 +31,7 @@ final class StatusBarController {
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.autosaveName = Self.autosaveName
-        statusItem.button?.image = Bundle.module.image(forResource: "MenuBarIcon")
+        statusItem.button?.image = Bundle.appResources.image(forResource: "MenuBarIcon")
         statusItem.button?.setAccessibilityLabel("TinyMirror")
         statusItem.button?.toolTip = "TinyMirror"
 
@@ -162,7 +162,7 @@ final class StatusBarController {
         clientItem.title = name.map {
             String.localizedStringWithFormat(String(localized: "Mirroring: %@", bundle: .appLocalization), $0)
         } ?? String(localized: "No device connected", bundle: .appLocalization)
-        statusItem.button?.image = Bundle.module.image(
+        statusItem.button?.image = Bundle.appResources.image(
             forResource: name != nil ? "MenuBarIconConnected" : "MenuBarIcon")
     }
 
