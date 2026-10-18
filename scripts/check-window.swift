@@ -57,6 +57,8 @@ struct WindowChecks {
     }
 
     static func assertIdleWindow(in window: NSWindow) {
+        assert(window.resizeIncrements == NSSize(width: 1, height: 1),
+               "Idle sizing must preserve native resize increments for zoom/full-screen restoration")
         assert(window.frame.size == NSSize(width: 370, height: 730),
                "An idle mirror must restore the default phone-sized window")
         let picture = (window.contentView as! MirrorFrameView).videoView.bounds
@@ -200,6 +202,8 @@ struct WindowChecks {
             ("tablet", 2048, 2732), ("ultrawide", 5120, 1440)
         ] {
             controller.setVideoDimensions(width: width, height: height)
+            assert(window.resizeIncrements == NSSize(width: 1, height: 1),
+                   "Video sizing must not zero native resize increments")
             window.contentView?.layoutSubtreeIfNeeded()
             let content = controller.videoView.bounds
             assertPictureFrame(in: window)

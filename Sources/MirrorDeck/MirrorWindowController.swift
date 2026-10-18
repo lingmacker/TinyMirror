@@ -118,7 +118,6 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
 
     private func resetIdleWindowSize() {
         guard let window, !frameView.isFullScreen, !window.styleMask.contains(.fullScreen) else { return }
-        window.aspectRatio = .zero
         window.minSize = Self.idleMinimumSize
         let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
             ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
@@ -221,7 +220,6 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     func setVideoDimensions(width: Int, height: Int) {
         guard let window, width > 0, height > 0 else { return }
         videoSize = NSSize(width: width, height: height)
-        window.aspectRatio = .zero
         guard !frameView.isFullScreen, !window.styleMask.contains(.fullScreen) else { return }
         let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
             ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
@@ -246,6 +244,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         window.setFrame(NSRect(origin: origin, size: size), display: true)
     }
 
+    // Zeroing native aspectRatio also zeros resize increments and breaks AppKit restoration.
     func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
         guard videoSize != .zero, !frameView.isFullScreen, !sender.styleMask.contains(.fullScreen) else { return frameSize }
         let border = frameView.contentInset * 2
