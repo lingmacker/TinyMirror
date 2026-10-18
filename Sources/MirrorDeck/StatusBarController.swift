@@ -51,6 +51,13 @@ final class StatusBarController {
         menu.addItem(quitItem)
         menu.autoenablesItems = false
         statusItem.menu = menu
+
+        // Status-item menus alone are not searched for active-window shortcuts.
+        let mainMenu = NSMenu()
+        let appItem = NSMenuItem(title: "MirrorDeck", action: nil, keyEquivalent: "")
+        appItem.submenu = menu
+        mainMenu.addItem(appItem)
+        NSApp.mainMenu = mainMenu
     }
 
     /// Reflects the current state in the menu's checkmark.

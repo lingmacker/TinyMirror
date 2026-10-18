@@ -66,6 +66,9 @@ without cropping the picture.
 Choose **Keep Window on Top** in the menu bar to float the mirror above other
 applications. It is on by default, and your choice is remembered across launches.
 
+With the mirror window active, **⌘M** shows it, **⌘T** toggles always-on-top,
+and **⌘Q** quits MirrorDeck. These are app shortcuts, not global hotkeys.
+
 ## Languages
 
 The app supports **English** and **Simplified Chinese**, following the macOS
