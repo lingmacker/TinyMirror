@@ -10,6 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+../scripts/build-deps.sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 >/dev/null
 cmake --build build -j"$(sysctl -n hw.ncpu)" --target mirrorcore
 

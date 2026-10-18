@@ -24,5 +24,4 @@ clean:
 	@if [ -f native/build/CMakeCache.txt ]; then \
 		cmake --build native/build --target clean; \
 	fi
-	rm -rf .build/out .build/arm64-apple-macosx .build/x86_64-apple-macosx .build/debug .build/release dist
-	rm -f .build/build.db .build/debug.yaml .build/release.yaml
+	rm -rf .build

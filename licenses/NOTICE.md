@@ -32,7 +32,8 @@ codesign --force --sign - /Applications/MirrorDeck.app   # re-sign after replaci
 ```
 
 Complete corresponding source for the components above is available from their
-upstream projects at the commits pinned in `scripts/bootstrap.sh`:
+upstream projects at the UxPlay commit pinned in `scripts/bootstrap.sh` and the
+SHA-256-verified dependency releases pinned in `scripts/build-deps.sh`:
 
 - UxPlay (includes `playfair`, `llhttp`): https://github.com/FDH2/UxPlay
 - libplist: https://github.com/libimobiledevice/libplist

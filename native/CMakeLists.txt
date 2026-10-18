@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.22)
 project(mirrorcore C)
 
 # The AirPlay core is built as a SHARED library, not linked into the app.
@@ -12,6 +12,24 @@ add_definitions(-DUXPLAY_HAVE_APPLE_P2P)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(UXPLAY ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/UxPlay)
+get_filename_component(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../.build/deps/macos26" ABSOLUTE)
+if(NOT EXISTS "${DEPS_PREFIX}/include/openssl/evp.h" OR
+   NOT EXISTS "${DEPS_PREFIX}/include/plist/plist.h")
+    message(FATAL_ERROR "Native dependencies are missing; run ./native/build.sh to rebuild them.")
+endif()
+# UxPlay overwrites PKG_CONFIG_PATH; give pkgconf the selected prefix explicitly.
+set(PKG_CONFIG_ARGN "--with-path=${DEPS_PREFIX}/lib/pkgconfig" CACHE STRING "Local native dependencies" FORCE)
+set(CMAKE_PREFIX_PATH "${DEPS_PREFIX};${CMAKE_PREFIX_PATH}")
+set(LIBCRYPTO "${DEPS_PREFIX}/lib/libcrypto.a" CACHE FILEPATH "macOS 26 libcrypto" FORCE)
+set(LIBPLIST "${DEPS_PREFIX}/lib/libplist-2.0.a" CACHE FILEPATH "macOS 26 libplist" FORCE)
+# Refresh cached pkg-config results after dependency deletion or repository moves.
+get_cmake_property(cached_variables CACHE_VARIABLES)
+foreach(variable IN LISTS cached_variables)
+    if(variable MATCHES "^(OPENSSL_|PLIST_|pkgcfg_lib_(OPENSSL|PLIST)|__pkg_config_(checked|arguments)_(OPENSSL|PLIST))")
+        unset(${variable})
+        unset(${variable} CACHE)
+    endif()
+endforeach()
 
 add_subdirectory(${UXPLAY}/lib/dns_sd dns_sd)
 add_subdirectory(${UXPLAY}/lib/llhttp llhttp)

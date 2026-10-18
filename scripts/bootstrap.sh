@@ -32,5 +32,5 @@ fetch vendor/UxPlay "$UXPLAY_REPO" "$UXPLAY_COMMIT"
 
 echo
 echo "Dependencies ready. Next:"
-echo "  brew install openssl@3 libplist cmake pkg-config   # if not installed"
+echo "  brew install cmake pkg-config                       # if not installed"
 echo "  make build                                          # build the native core and app"

@@ -126,7 +126,15 @@ same network, and that MirrorDeck has local network permission (System Settings
 
 ## Building from source
 
-Requires Xcode, plus Homebrew `openssl@3`, `libplist`, `cmake`, `pkg-config`.
+Requires Xcode, CMake 3.22+ and Homebrew's `pkg-config` (`pkgconf`):
+`brew install cmake pkg-config`.
+
+The first build downloads SHA-256-verified OpenSSL 3.5.9 and libplist 2.8.0 source
+archives and builds static libraries for macOS 26 under `.build/deps/macos26`.
+This needs network access once and takes longer than incremental builds. Homebrew's
+OpenSSL/libplist binaries are not used: newer bottles may require a newer macOS
+version than the app supports. If `.build/` or those local dependencies are deleted,
+`make build` recreates them automatically and refreshes CMake's dependency paths.
 
 ```sh
 make build    # fetch pinned UxPlay, incrementally build the core + Debug app
@@ -151,9 +159,10 @@ existing copy, restores the previous copy if replacement fails, and leaves user
 preferences untouched.
 
 `clean` preserves `vendor/`, `.build/deps/`, dependency source checkouts, SwiftPM
-configuration and the native CMake cache. This also preserves locally selected
-macOS 26-compatible OpenSSL/libplist builds; only the native compiled targets,
-Swift products and `dist/` are cleaned.
+configuration and the native CMake cache. The native dependency paths are regenerated from
+the project-managed macOS 26 prefix, so deleted dependencies or stale pkg-config
+cache entries do not require hand-editing CMake settings. Only the native compiled
+targets, Swift products and `dist/` are cleaned.
 
 ### Regression checks
 
@@ -175,6 +184,8 @@ swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-ca
 After `make build`, `python3 scripts/check-build.py` verifies the assembled app,
 ad-hoc signatures, installation and replacement rollback using temporary
 locations under `.build/`, without writing to `/Applications`.
+`python3 scripts/check-native-deps.py` also verifies a fresh native configuration
+with poisoned old dependency paths and checks every static object's deployment target.
 
 ### Distribution
 
