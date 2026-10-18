@@ -66,6 +66,42 @@ struct WindowChecks {
                "The idle picture must use a 9:18 portrait ratio")
     }
 
+    static func assertLiveResize(in controller: MirrorWindowController) {
+        let window = controller.window!
+        let originalFrame = window.frame
+        controller.setVideoDimensions(width: 498, height: 1080)
+        defer {
+            NotificationCenter.default.post(name: NSWindow.didEndLiveResizeNotification, object: window)
+            controller.setVideoDimensions(width: 1179, height: 2556)
+            window.setFrame(originalFrame, display: true)
+        }
+        NotificationCenter.default.post(name: NSWindow.willStartLiveResizeNotification, object: window)
+        assert(controller.windowWillResize(window, to: window.frame.size) == window.frame.size,
+               "An unchanged initial proposal must not lock the resize axis")
+        var previous = window.frame.size
+        // Real iPhone corner-drag proposals: both dimensions shrink, but the old heuristic alternated axes.
+        for (width, height) in [
+            (344, 738), (341, 737), (336, 734), (331, 731), (324, 726), (318, 722),
+            (312, 718), (308, 715), (304, 713), (301, 711), (299, 709), (297, 708),
+            (270, 680), (270, 679), (270, 677), (270, 675)
+        ] {
+            let resized = controller.windowWillResize(window, to: NSSize(width: width, height: height))
+            window.setFrame(NSRect(origin: window.frame.origin, size: resized), display: true)
+            assert(window.frame.width <= previous.width && window.frame.height <= previous.height,
+                   "An inward iPhone drag must never bounce the window back to a larger size")
+            previous = window.frame.size
+        }
+        NotificationCenter.default.post(name: NSWindow.didEndLiveResizeNotification, object: window)
+        NotificationCenter.default.post(name: NSWindow.willStartLiveResizeNotification, object: window)
+        for _ in 0..<8 {
+            let previousHeight = window.frame.height
+            let proposed = NSSize(width: window.frame.width, height: previousHeight + 2)
+            let resized = controller.windowWillResize(window, to: proposed)
+            window.setFrame(NSRect(origin: window.frame.origin, size: resized), display: true)
+            assert(window.frame.height > previousHeight, "A new vertical drag must not retain the previous horizontal axis")
+        }
+    }
+
     static func previewImage(size: NSSize) -> NSImage {
         let image = NSImage(size: size)
         image.lockFocus()
@@ -190,6 +226,7 @@ struct WindowChecks {
         enqueueFirstFrame(on: controller.videoView.displayLayer)
         wait { controller.playbackState == .mirroring }
         assert(controller.videoView.subviews.allSatisfy(\.isHidden), "Live playback must not have any overlay UI")
+        assertLiveResize(in: controller)
 
         // Synthetic, labeled picture for layout captures: not a phone screenshot.
         let preview = NSImageView(frame: controller.videoView.bounds)

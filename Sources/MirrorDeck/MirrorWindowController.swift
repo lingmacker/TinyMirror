@@ -3,6 +3,7 @@ import AVFoundation
 
 final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     enum PlaybackState { case waiting, connecting, mirroring, unavailable }
+    private enum ResizeAxis { case undecided, width, height }
 
     // Sizes include the 5pt bezel; the idle picture itself uses a 9:18 ratio.
     private static let idleWindowSize = NSSize(width: 370, height: 730)
@@ -20,6 +21,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     private var fullScreenVideoSize: NSSize = .zero
     private var firstFrameReady = false
     private var buttonTrackingArea: NSTrackingArea?
+    private var liveResizeAxis: ResizeAxis?
     private(set) var playbackState = PlaybackState.waiting
 
     init() {
@@ -195,6 +197,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     override func mouseExited(with event: NSEvent) { setWindowButtonsVisible(false) }
 
     func windowDidMove(_ notification: Notification) { refreshWindowButtons() }
+    func windowWillStartLiveResize(_ notification: Notification) { liveResizeAxis = .undecided }
+    func windowDidEndLiveResize(_ notification: Notification) { liveResizeAxis = nil }
     func windowDidResize(_ notification: Notification) {
         frameView.needsLayout = true
         frameView.layoutSubtreeIfNeeded()
@@ -251,7 +255,14 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         let aspect = videoSize.width / videoSize.height
         let width = max(frameSize.width, sender.minSize.width)
         let height = max(frameSize.height, sender.minSize.height)
-        if abs(frameSize.width - sender.frame.width) > abs(frameSize.height - sender.frame.height) * aspect {
+        let suggestedAxis: ResizeAxis = abs(frameSize.width - sender.frame.width)
+            > abs(frameSize.height - sender.frame.height) * aspect ? .width : .height
+        if liveResizeAxis == .undecided {
+            guard frameSize != sender.frame.size else { return frameSize }
+            liveResizeAxis = suggestedAxis
+        }
+        // Keep one axis per gesture so our corrected size cannot flip the next resize decision.
+        if (liveResizeAxis ?? suggestedAxis) == .width {
             return NSSize(width: width, height: (width - border) / aspect + border)
         }
         return NSSize(width: (height - border) * aspect + border, height: height)
