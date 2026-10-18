@@ -173,6 +173,10 @@ To produce a Release app and disk image:
 VERSION=0.2.0 ./scripts/package.sh
 ```
 
+Pushing a version tag such as `v0.2.0` triggers GitHub Actions to build on a macOS 26
+runner and publish `TinyMirror-0.2.0.dmg` to GitHub Releases. The workflow is
+`.github/workflows/release.yml`.
+
 `package.sh` uses `make build CONFIGURATION=release` for the same bundle assembly,
 then creates and ad-hoc signs the disk image. Ad-hoc signatures provide code
 integrity, not developer identity or notarization, so Gatekeeper may block

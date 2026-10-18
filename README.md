@@ -141,6 +141,9 @@ make clean    # 删除构建产物、dist/ 和 native/build/
 VERSION=0.2.0 ./scripts/package.sh
 ```
 
+推送版本标签（例如 `v0.2.0`）会触发 GitHub Actions，在 macOS 26 runner 上自动构建并发布
+`TinyMirror-0.2.0.dmg` 到 GitHub Releases。发布工作流位于 `.github/workflows/release.yml`。
+
 `package.sh` 会执行 `make build CONFIGURATION=release`，使用同一套应用组装流程，然后创建并签名磁盘映像。
 Ad-hoc 签名只提供代码完整性，不证明开发者身份，也不等同于公证，因此 Gatekeeper 可能阻止带隔离属性的下载文件。
 旧的 `NOTARIZE=1` 选项现在会明确失败；ad-hoc 构建不能提交给 Apple 公证。
