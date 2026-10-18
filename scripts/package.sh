@@ -23,11 +23,12 @@ echo "==> Building native AirPlay core (shared library)"
 
 echo "==> Building $APP_NAME $VERSION (release)"
 swift build -c release 2>&1 | grep -vE "^ld: warning" | tail -2
+BIN_DIR="$(swift build -c release --show-bin-path)"
 
 echo "==> Assembling bundle"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
-cp .build/release/"$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
+cp "$BIN_DIR/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
 
 # All copyleft code ships as this replaceable shared library, never linked into
 # the app binary. Required for LGPL relinking — see licenses/NOTICE.md.

@@ -90,7 +90,7 @@ Requires Xcode, plus Homebrew `openssl@3`, `libplist`, `cmake`, `pkg-config`.
 ./scripts/bootstrap.sh   # fetch UxPlay at a pinned commit
 ./native/build.sh        # build the AirPlay core -> libMirrorCore.dylib
 swift build
-./.build/debug/MirrorDeck
+swift run MirrorDeck
 ```
 
 ### Regression checks
