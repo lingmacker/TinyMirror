@@ -23,7 +23,7 @@ enum Settings {
         get {
             if let custom = defaults.string(forKey: "receiverName") { return custom }
             let host = Host.current().localizedName ?? "Mac"
-            return "\(host) (MirrorDeck)"
+            return "\(host) (TinyMirror)"
         }
         set { defaults.set(newValue, forKey: "receiverName") }
     }

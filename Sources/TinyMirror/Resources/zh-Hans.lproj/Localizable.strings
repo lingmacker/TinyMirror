@@ -3,7 +3,7 @@
 "Show Mirror Window" = "显示投屏窗口";
 "Stop Mirroring" = "关闭投屏";
 "Keep Window on Top" = "窗口置顶";
-"Quit MirrorDeck" = "退出 MirrorDeck";
+"Quit TinyMirror" = "退出 TinyMirror";
 "Visible as “%@”" = "投屏接收名称：“%@”";
 "Receiver failed to start" = "投屏接收服务启动失败";
 "Mirroring: %@" = "正在投屏：%@";
@@ -12,11 +12,11 @@
 "Waiting for your screen" = "正在等待投屏画面";
 "Keep Screen Mirroring enabled on your iPhone. The picture will appear here." = "请保持 iPhone 的“屏幕镜像”开启，画面即将在这里显示。";
 "Unable to start mirroring" = "无法启动投屏";
-"Quit and reopen MirrorDeck to try again. Check that local network access is allowed in System Settings." = "请退出并重新打开 MirrorDeck 后再试，并在“系统设置”中确认已允许访问本地网络。";
+"Quit and reopen TinyMirror to try again. Check that local network access is allowed in System Settings." = "请退出并重新打开 TinyMirror 后再试，并在“系统设置”中确认已允许访问本地网络。";
 "Mirrored device screen" = "设备投屏画面";
 "Escape exits full screen." = "按 Escape 键退出全屏。";
-"MirrorDeck's menu bar icon is hidden behind the notch" = "MirrorDeck 的菜单栏图标被刘海遮挡";
-"notch_warning_detail" = "MirrorDeck 正在运行，但菜单栏空间已满，macOS 将图标放在了摄像头刘海后面，因此无法看到或点击它。\n\n退出或隐藏一两个菜单栏应用，图标就会出现。之后可以按住 ⌘ 键拖动图标，调整后的位置会被记住。\n\n这不会影响投屏。在 iPhone 的“屏幕镜像”中选择这台 Mac，投屏窗口仍会自动打开。";
+"TinyMirror's menu bar icon is hidden behind the notch" = "TinyMirror 的菜单栏图标被刘海遮挡";
+"notch_warning_detail" = "TinyMirror 正在运行，但菜单栏空间已满，macOS 将图标放在了摄像头刘海后面，因此无法看到或点击它。\n\n退出或隐藏一两个菜单栏应用，图标就会出现。之后可以按住 ⌘ 键拖动图标，调整后的位置会被记住。\n\n这不会影响投屏。在 iPhone 的“屏幕镜像”中选择这台 Mac，投屏窗口仍会自动打开。";
 "OK" = "好";
 "720p — Smooth" = "720p — 流畅";
 "1080p — Compatible" = "1080p — 兼容";

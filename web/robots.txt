@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://egarl004.github.io/mirrordeck/sitemap.xml

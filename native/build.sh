@@ -5,7 +5,7 @@
 # copyleft-licensed code (UxPlay's LGPL lib/, the GPL-3.0 playfair FairPlay
 # implementation, LGPL libplist); the application links to it only through the
 # C ABI in include/mirror_bridge.h. Anyone can rebuild this library from source
-# with this script and drop the result into MirrorDeck.app/Contents/Frameworks/
+# with this script and drop the result into TinyMirror.app/Contents/Frameworks/
 # to run the app against their own build. See licenses/NOTICE.md.
 set -euo pipefail
 cd "$(dirname "$0")"

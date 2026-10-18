@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>MirrorDeck</string>
+	<string>TinyMirror</string>
 	<key>CFBundleDisplayName</key>
-	<string>MirrorDeck</string>
+	<string>TinyMirror</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.emersongarland.MirrorDeck</string>
+	<string>com.lingmacker.TinyMirror</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleLocalizations</key>
@@ -16,7 +16,7 @@
 		<string>zh-Hans</string>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>MirrorDeck</string>
+	<string>TinyMirror</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundlePackageType</key>
@@ -34,7 +34,7 @@
 	<true/>
 	<!-- Required on macOS 15+: advertise and receive AirPlay on the local network. -->
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>MirrorDeck advertises this Mac as an AirPlay screen mirroring target and connects to your iPhone over Wi-Fi.</string>
+	<string>TinyMirror advertises this Mac as an AirPlay screen mirroring target and connects to your iPhone over Wi-Fi.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_airplay._tcp</string>

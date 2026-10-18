@@ -11,17 +11,14 @@ build:
 	CONFIGURATION="$(CONFIGURATION)" ./scripts/build-app.sh
 
 run: build
-	@if pgrep -x MirrorDeck >/dev/null; then \
-		echo "Quit the running MirrorDeck before starting a new build." >&2; exit 1; \
+	@if pgrep -x TinyMirror >/dev/null; then \
+		echo "Quit the running TinyMirror before starting a new build." >&2; exit 1; \
 	fi
-	open "dist/MirrorDeck.app"
+	open "dist/TinyMirror.app"
 
 install:
 	$(MAKE) build CONFIGURATION=debug
 	./scripts/install-app.sh "$(INSTALL_DIR)"
 
 clean:
-	@if [ -f native/build/CMakeCache.txt ]; then \
-		cmake --build native/build --target clean; \
-	fi
-	rm -rf .build
+	rm -rf .build dist native/build

@@ -15,7 +15,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     private let waitingView = NSBox()
     private let waitingTitle = NSTextField(wrappingLabelWithString: String(localized: "Ready to mirror", bundle: .appLocalization))
     private let waitingHint = NSTextField(wrappingLabelWithString: "")
-    private var receiverName = "MirrorDeck"
+    private var receiverName = "TinyMirror"
     private var receiverAvailable = true
     private var deviceName: String?
     private var videoSize: NSSize = .zero
@@ -32,7 +32,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             contentRect: NSRect(origin: .zero, size: Self.idleWindowSize),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
-        window.title = "MirrorDeck"
+        window.title = "TinyMirror"
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
@@ -143,7 +143,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         } else {
             playbackState = receiverAvailable ? .waiting : .unavailable
         }
-        window?.title = deviceName ?? "MirrorDeck"
+        window?.title = deviceName ?? "TinyMirror"
         waitingView.isHidden = playbackState == .mirroring
         switch playbackState {
         case .waiting:
@@ -158,7 +158,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             break
         case .unavailable:
             waitingTitle.stringValue = String(localized: "Unable to start mirroring", bundle: .appLocalization)
-            waitingHint.stringValue = String(localized: "Quit and reopen MirrorDeck to try again. Check that local network access is allowed in System Settings.", bundle: .appLocalization)
+            waitingHint.stringValue = String(localized: "Quit and reopen TinyMirror to try again. Check that local network access is allowed in System Settings.", bundle: .appLocalization)
         }
     }
 

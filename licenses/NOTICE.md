@@ -1,8 +1,8 @@
-# Third-party components in MirrorDeck
+# Third-party components in TinyMirror
 
-MirrorDeck's AirPlay receiver is built from third-party open-source code. All of
+TinyMirror's AirPlay receiver is built from third-party open-source code. All of
 it is isolated in a single shared library, **`libMirrorCore.dylib`**, shipped at
-`MirrorDeck.app/Contents/Frameworks/libMirrorCore.dylib`. The application binary
+`TinyMirror.app/Contents/Frameworks/libMirrorCore.dylib`. The application binary
 contains none of it and talks to the library only through the C interface in
 `native/include/mirror_bridge.h` (`mb_start_video`, compatible `mb_start`, and
 `mb_stop` — the only symbols the library exports).
@@ -20,15 +20,15 @@ License texts accompany this file: `LGPL-2.1.txt`, `GPL-3.0.txt`,
 
 ## Rebuilding and replacing the library
 
-You may rebuild `libMirrorCore.dylib` from source and run MirrorDeck against
+You may rebuild `libMirrorCore.dylib` from source and run TinyMirror against
 your own build. Nothing in the application is tied to a particular build of it.
 
 ```sh
 ./scripts/bootstrap.sh    # fetch UxPlay at its pinned commit
 ./native/build.sh         # produces native/build/libMirrorCore.dylib
 cp native/build/libMirrorCore.dylib \
-   /Applications/MirrorDeck.app/Contents/Frameworks/libMirrorCore.dylib
-codesign --force --sign - /Applications/MirrorDeck.app   # re-sign after replacing
+   /Applications/TinyMirror.app/Contents/Frameworks/libMirrorCore.dylib
+codesign --force --sign - /Applications/TinyMirror.app   # re-sign after replacing
 ```
 
 Complete corresponding source for the components above is available from their
@@ -51,10 +51,10 @@ be released under GPL-3.0, and unlike LGPL there is no linking exception that a
 shared library satisfies. `playfair` is not optional — it performs the FairPlay
 key exchange (`fairplay_decrypt`) without which no mirroring session can start.
 
-Therefore MirrorDeck as currently built **cannot be distributed as a
+Therefore TinyMirror as currently built **cannot be distributed as a
 closed-source product.** Options, in rough order of practicality:
 
-1. **Release MirrorDeck itself under GPL-3.0.** Selling GPL software is
+1. **Release TinyMirror itself under GPL-3.0.** Selling GPL software is
    permitted, but recipients may redistribute the source, which is usually
    incompatible with a paid-download business.
 2. **Move the receiver into a separate GPL-3.0 process** that communicates with

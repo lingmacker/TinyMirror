@@ -120,7 +120,7 @@ int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug_log,
 
     ntp_global_init();
 
-    char hostname[256] = "mirrordeck";
+    char hostname[256] = "tinymirror";
     gethostname(hostname, sizeof(hostname) - 1);
     char seed[512];
     snprintf(seed, sizeof(seed), "%s|%s", hostname, name);

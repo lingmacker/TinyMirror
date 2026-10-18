@@ -3,14 +3,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP="$PWD/dist/MirrorDeck.app"
+APP="$PWD/dist/TinyMirror.app"
 INSTALL_DIR="${1:?Usage: install-app.sh INSTALL_DIR}"
 if [ ! -d "$APP" ]; then
-    echo "Build MirrorDeck.app before installing." >&2
+    echo "Build TinyMirror.app before installing." >&2
     exit 1
 fi
-if pgrep -x MirrorDeck >/dev/null; then
-    echo "Quit the running MirrorDeck before installing." >&2
+if pgrep -x TinyMirror >/dev/null; then
+    echo "Quit the running TinyMirror before installing." >&2
     exit 1
 fi
 mkdir -p "$INSTALL_DIR"
@@ -18,7 +18,7 @@ INSTALL_DIR="$(cd "$INSTALL_DIR" && pwd -P)"
 case "$INSTALL_DIR/" in
     "$APP/"*) echo "Cannot install inside the source app bundle." >&2; exit 1 ;;
 esac
-DEST="$INSTALL_DIR/MirrorDeck.app"
+DEST="$INSTALL_DIR/TinyMirror.app"
 if [ -L "$DEST" ] || { [ -e "$DEST" ] && [ ! -d "$DEST" ]; }; then
     echo "Refusing to replace a symlink or non-directory: $DEST" >&2
     exit 1
@@ -32,7 +32,7 @@ if [ -d "$DEST" ]; then
     fi
 fi
 
-STAGE="$(mktemp -d "$INSTALL_DIR/.mirrordeck-install.XXXXXX")"
+STAGE="$(mktemp -d "$INSTALL_DIR/.tinymirror-install.XXXXXX")"
 cleanup() {
     if [ -d "$STAGE/previous.app" ] && [ ! -e "$DEST" ]; then
         if ! mv "$STAGE/previous.app" "$DEST"; then
@@ -45,8 +45,8 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
 
-ditto "$APP" "$STAGE/MirrorDeck.app"
-codesign --verify --strict "$STAGE/MirrorDeck.app"
+ditto "$APP" "$STAGE/TinyMirror.app"
+codesign --verify --strict "$STAGE/TinyMirror.app"
 if [ -d "$DEST" ]; then mv "$DEST" "$STAGE/previous.app"; fi
-mv "$STAGE/MirrorDeck.app" "$DEST"
+mv "$STAGE/TinyMirror.app" "$DEST"
 echo "Installed $DEST"

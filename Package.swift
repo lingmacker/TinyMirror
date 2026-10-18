@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "MirrorDeck",
+    name: "TinyMirror",
     defaultLocalization: "en",
     platforms: [.macOS("26.0")],
     targets: [
@@ -14,9 +14,9 @@ let package = Package(
             publicHeadersPath: "include"
         ),
         .executableTarget(
-            name: "MirrorDeck",
+            name: "TinyMirror",
             dependencies: ["CMirrorBridge"],
-            path: "Sources/MirrorDeck",
+            path: "Sources/TinyMirror",
             resources: [.process("Resources")],
             linkerSettings: [
                 // libMirrorCore.dylib is linked dynamically and kept replaceable

@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         wireVideo()
         wireUI()
         startReceiver()
-        if ProcessInfo.processInfo.environment["MIRRORDECK_PREVIEW"] == "1" {
+        if ProcessInfo.processInfo.environment["TINYMIRROR_PREVIEW"] == "1" {
             windowController.present()
         }
     }
@@ -86,7 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         startReceiver()
     }
 
-    static let debugEnabled = ProcessInfo.processInfo.environment["MIRRORDECK_DEBUG"] == "1"
+    static let debugEnabled = ProcessInfo.processInfo.environment["TINYMIRROR_DEBUG"] == "1"
 
     private func startReceiver() {
         let name = Settings.receiverName
@@ -94,10 +94,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController.setReceiverState(name: name, isRunning: started)
         if started {
             statusBar.setReceiverState(String.localizedStringWithFormat(String(localized: "Visible as “%@”", bundle: .appLocalization), name))
-            NSLog("[MirrorDeck] receiver started, advertising as “%@”", name)
+            NSLog("[TinyMirror] receiver started, advertising as “%@”", name)
         } else {
             statusBar.setReceiverState(String(localized: "Receiver failed to start", bundle: .appLocalization))
-            NSLog("[MirrorDeck] RECEIVER FAILED TO START")
+            NSLog("[TinyMirror] RECEIVER FAILED TO START")
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self else { return }
@@ -114,7 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.set(true, forKey: key)
 
         let alert = NSAlert()
-        alert.messageText = String(localized: "MirrorDeck's menu bar icon is hidden behind the notch", bundle: .appLocalization)
+        alert.messageText = String(localized: "TinyMirror's menu bar icon is hidden behind the notch", bundle: .appLocalization)
         alert.informativeText = String(localized: "notch_warning_detail", bundle: .appLocalization)
         alert.alertStyle = .informational
         alert.addButton(withTitle: String(localized: "OK", bundle: .appLocalization))

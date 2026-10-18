@@ -3,7 +3,7 @@
 "Show Mirror Window" = "Show Mirror Window";
 "Stop Mirroring" = "Stop Mirroring";
 "Keep Window on Top" = "Keep Window on Top";
-"Quit MirrorDeck" = "Quit MirrorDeck";
+"Quit TinyMirror" = "Quit TinyMirror";
 "Visible as “%@”" = "Visible as “%@”";
 "Receiver failed to start" = "Receiver failed to start";
 "Mirroring: %@" = "Mirroring: %@";
@@ -12,11 +12,11 @@
 "Waiting for your screen" = "Waiting for your screen";
 "Keep Screen Mirroring enabled on your iPhone. The picture will appear here." = "Keep Screen Mirroring enabled on your iPhone. The picture will appear here.";
 "Unable to start mirroring" = "Unable to start mirroring";
-"Quit and reopen MirrorDeck to try again. Check that local network access is allowed in System Settings." = "Quit and reopen MirrorDeck to try again. Check that local network access is allowed in System Settings.";
+"Quit and reopen TinyMirror to try again. Check that local network access is allowed in System Settings." = "Quit and reopen TinyMirror to try again. Check that local network access is allowed in System Settings.";
 "Mirrored device screen" = "Mirrored device screen";
 "Escape exits full screen." = "Escape exits full screen.";
-"MirrorDeck's menu bar icon is hidden behind the notch" = "MirrorDeck's menu bar icon is hidden behind the notch";
-"notch_warning_detail" = "MirrorDeck is running, but your menu bar is full, so macOS placed its icon behind the camera notch where it cannot be seen or clicked.\n\nQuit or hide one or two other menu bar apps and it will appear. You can then ⌘-drag it anywhere, and it will stay there.\n\nMirroring works either way — pick this Mac from Screen Mirroring on your iPhone and the window will open on its own.";
+"TinyMirror's menu bar icon is hidden behind the notch" = "TinyMirror's menu bar icon is hidden behind the notch";
+"notch_warning_detail" = "TinyMirror is running, but your menu bar is full, so macOS placed its icon behind the camera notch where it cannot be seen or clicked.\n\nQuit or hide one or two other menu bar apps and it will appear. You can then ⌘-drag it anywhere, and it will stay there.\n\nMirroring works either way — pick this Mac from Screen Mirroring on your iPhone and the window will open on its own.";
 "OK" = "OK";
 "720p — Smooth" = "720p — Smooth";
 "1080p — Compatible" = "1080p — Compatible";

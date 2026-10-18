@@ -8,9 +8,9 @@ final class VideoPipeline {
     /// Reported on the main thread whenever the coded video size changes.
     var onDimensions: ((Int, Int, Bool) -> Void)?
 
-    static let debugEnabled = ProcessInfo.processInfo.environment["MIRRORDECK_DEBUG"] == "1"
+    static let debugEnabled = ProcessInfo.processInfo.environment["TINYMIRROR_DEBUG"] == "1"
 
-    private let queue = DispatchQueue(label: "mirrordeck.video", qos: .userInteractive)
+    private let queue = DispatchQueue(label: "tinymirror.video", qos: .userInteractive)
     private let generationLock = NSLock()
     private var generation = 0
     private var formatDescription: CMVideoFormatDescription?
@@ -69,7 +69,7 @@ final class VideoPipeline {
         let nals = VideoPipeline.splitAnnexB(frame)
         if VideoPipeline.debugEnabled && framesSeen < 5 {
             let types = nals.map { String(isH265 ? (($0.first ?? 0) >> 1) & 0x3F : ($0.first ?? 0) & 0x1F) }.joined(separator: ",")
-            NSLog("[MirrorDeck] video frame %d: %d bytes, %d NAL(s), types=[%@]",
+            NSLog("[TinyMirror] video frame %d: %d bytes, %d NAL(s), types=[%@]",
                   framesSeen, frame.count, nals.count, types)
         }
         framesSeen += 1
@@ -108,12 +108,12 @@ final class VideoPipeline {
         guard let sampleBuffer = makeSampleBuffer(vclUnits, format: formatDescription) else { return }
 
         guard let layer = displayLayer else {
-            if framesSeen < 3 { NSLog("[MirrorDeck] no display layer — frames are being dropped") }
+            if framesSeen < 3 { NSLog("[TinyMirror] no display layer — frames are being dropped") }
             return
         }
         let renderer = layer.sampleBufferRenderer
         if renderer.status == .failed {
-            NSLog("[MirrorDeck] display layer failed: %@",
+            NSLog("[TinyMirror] display layer failed: %@",
                   renderer.error?.localizedDescription ?? "unknown")
             renderer.flush()
         }
@@ -154,14 +154,14 @@ final class VideoPipeline {
             }
         }
         guard status == noErr, let format else {
-            NSLog("[MirrorDeck] format description FAILED (status %d) sps=%d pps=%d bytes",
+            NSLog("[TinyMirror] format description FAILED (status %d) sps=%d pps=%d bytes",
                   Int(status), sps.count, pps.count)
             return
         }
         formatDescription = format
         if VideoPipeline.debugEnabled {
             let d = CMVideoFormatDescriptionGetDimensions(format)
-            NSLog("[MirrorDeck] format description ready: %dx%d", d.width, d.height)
+            NSLog("[TinyMirror] format description ready: %dx%d", d.width, d.height)
         }
 
         let dims = CMVideoFormatDescriptionGetDimensions(format)

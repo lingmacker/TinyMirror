@@ -17,19 +17,19 @@ COPYRIGHT="${COPYRIGHT:-Copyright © $(date +%Y) Emerson Garland. All rights res
 export VERSION BUILD_NUMBER COPYRIGHT
 
 make build CONFIGURATION=release
-APP="dist/MirrorDeck.app"
-DMG="dist/MirrorDeck-$VERSION.dmg"
+APP="dist/TinyMirror.app"
+DMG="dist/TinyMirror-$VERSION.dmg"
 STAGE="dist/dmg"
 trap 'rm -rf "$STAGE"' EXIT
 
 rm -rf "$STAGE" "$DMG"
 mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/MirrorDeck.app"
+ditto "$APP" "$STAGE/TinyMirror.app"
 ln -s /Applications "$STAGE/Applications"
 if diskutil image create from --help >/dev/null 2>&1; then
-    diskutil image create from --volumeName MirrorDeck --format UDZO "$STAGE" "$DMG"
+    diskutil image create from --volumeName TinyMirror --format UDZO "$STAGE" "$DMG"
 else
-    hdiutil create -volname MirrorDeck -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+    hdiutil create -volname TinyMirror -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 fi
 codesign --force --sign - "$DMG"
 codesign --verify --strict "$DMG"

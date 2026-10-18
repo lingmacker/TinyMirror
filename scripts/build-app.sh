@@ -11,7 +11,7 @@ esac
 VERSION="${VERSION:-0.1.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
 COPYRIGHT="${COPYRIGHT:-Copyright © $(date +%Y) Emerson Garland. All rights reserved.}"
-APP="dist/MirrorDeck.app"
+APP="dist/TinyMirror.app"
 SWIFT_ARGS=(--cache-path .build/cache --config-path .build/config --security-path .build/security --disable-sandbox)
 
 ./native/build.sh
@@ -20,8 +20,8 @@ BIN_DIR="$(swift build "${SWIFT_ARGS[@]}" -c "$CONFIGURATION" --show-bin-path)"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
-cp "$BIN_DIR/MirrorDeck" "$APP/Contents/MacOS/"
-cp -R "$BIN_DIR/MirrorDeck_MirrorDeck.bundle" "$APP/Contents/Resources/"
+cp "$BIN_DIR/TinyMirror" "$APP/Contents/MacOS/"
+cp -R "$BIN_DIR/TinyMirror_TinyMirror.bundle" "$APP/Contents/Resources/"
 cp -R packaging/en.lproj packaging/zh-Hans.lproj "$APP/Contents/Resources/"
 cp native/build/libMirrorCore.dylib "$APP/Contents/Frameworks/"
 cp -R licenses "$APP/Contents/Resources/licenses"

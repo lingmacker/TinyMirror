@@ -1,4 +1,4 @@
-// Generates MirrorDeck's app icon as an .iconset (run by scripts/build-app.sh).
+// Generates TinyMirror's app icon as an .iconset (run by scripts/build-app.sh).
 // Dependency-free: renders with CoreGraphics, no design assets to ship.
 //
 //   swift packaging/MakeIcon.swift <output.iconset>

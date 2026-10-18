@@ -1,289 +1,215 @@
 <div align="center">
 
-# MirrorDeck
+# TinyMirror
 
-**Put your iPhone screen on your Mac over Wi-Fi.**
+**通过 Wi‑Fi 将 iPhone 屏幕投射到 Mac。**
 
-[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-lightgrey.svg)](#requirements)
-[![Release](https://img.shields.io/github/v/release/egarl004/mirrordeck)](https://github.com/egarl004/mirrordeck/releases/latest)
+[![许可证：GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+[![平台：macOS 26+](https://img.shields.io/badge/platform-macOS%2026%2B-lightgrey.svg)](#系统要求)
+[![最新版本](https://img.shields.io/github/v/release/egarl004/mirrordeck)](https://github.com/egarl004/mirrordeck/releases/latest)
+
+**中文** · [English](README.en.md)
 
 </div>
 
-MirrorDeck turns your Mac into a wireless screen-mirroring target. It appears in
-your iPhone's Control Center under **Screen Mirroring**, exactly like an Apple TV
-— pick it, and your phone shows up in a native macOS window on your desktop.
-Nothing to install on the phone.
+TinyMirror 可以将 Mac 变成无线投屏接收器。它会像 Apple TV 一样出现在
+iPhone 控制中心的**屏幕镜像**列表中。选择它后，iPhone 画面会显示在 Mac 的原生窗口中，
+无需在 iPhone 上安装任何应用。
 
-MirrorDeck is display-only: mouse and keyboard input stays on your Mac.
+TinyMirror 仅接收画面，不支持从 Mac 向 iPhone 转发鼠标或键盘操作。
 
 ---
 
-## Installing
+## 安装
 
-Download the latest `.dmg` from **[Releases](https://github.com/egarl004/mirrordeck/releases/latest)**,
-open it, and drag MirrorDeck to Applications.
+从 **[Releases](https://github.com/egarl004/mirrordeck/releases/latest)** 下载最新的 `.dmg`，
+打开后将 TinyMirror 拖入“应用程序”文件夹。
 
-Builds use **ad-hoc signing**, not Developer ID signing or Apple notarization.
-Downloaded copies may be blocked by Gatekeeper on other Macs. Only open builds
-you trust; if macOS blocks one, use the explicit approval in System Settings →
-Privacy & Security rather than disabling Gatekeeper.
+构建产物使用 **ad-hoc 签名**，不是 Developer ID 签名，也没有经过 Apple 公证。
+其他 Mac 下载的副本可能会被 Gatekeeper 拦截。只打开你信任的构建版本；如果 macOS 阻止启动，
+请在“系统设置 → 隐私与安全性”中明确批准，不要关闭 Gatekeeper。
 
-MirrorDeck lives in the **menu bar**, without a Dock icon. The mirror window
-opens automatically when a phone connects; **Show Mirror Window** opens the
-connection guide at any time. On first launch macOS will ask for **local network
-permission**; mirroring cannot work without it.
+TinyMirror 运行在**菜单栏**中，不显示 Dock 图标。手机连接后，投屏窗口会自动打开；
+随时选择 **显示投屏窗口** 可以查看连接说明。首次启动时 macOS 会请求**本地网络权限**，
+没有该权限就无法投屏。
 
-Then on your iPhone: **Control Center → Screen Mirroring → "‹your Mac› (MirrorDeck)"**.
+然后在 iPhone 上选择：**控制中心 → 屏幕镜像 →“‹你的 Mac› (TinyMirror)”**。
 
-### Requirements
+### 系统要求
 
 | | |
 |---|---|
-| **macOS** | 26 (Tahoe) or later — Apple silicon or Intel |
-| **iPhone** | Any iPhone on the same Wi-Fi network |
-| **For mirroring** | Nothing else. No phone-side install. |
+| **macOS** | 26（Tahoe）或更高版本，支持 Apple 芯片和 Intel |
+| **iPhone** | 与 Mac 连接到同一 Wi‑Fi 的任意 iPhone |
+| **投屏所需** | 无其他依赖，无需在手机端安装应用 |
 
-## Mirror window
+## 投屏窗口
 
-The picture sits inside a slim, 5-point graphite frame with softly rounded
-corners and the native window shadow. Full screen removes the frame for an
-edge-to-edge view. There are no floating controls. The native close, minimize,
-and full-screen buttons are hidden by default: hover near their
-top-left position to reveal them, and leave that area to hide them. Hovering the
-rest of the picture does not reveal the buttons. VoiceOver keeps
-the buttons available. **Escape** exits full screen.
+画面位于纤薄的 5 点石墨色边框中，带有柔和圆角和原生窗口阴影。全屏时会移除边框，
+显示为无边缘画面。窗口默认隐藏关闭、最小化和全屏按钮；将鼠标移到左上角附近即可显示，
+离开该区域后重新隐藏。鼠标悬停在画面其他位置不会显示按钮。VoiceOver 仍可访问这些按钮。
+按 **Escape** 退出全屏。
 
-Choose **Show Mirror Window** in the menu bar even before connecting to see
-connection instructions. The waiting screen stays until the first video frame
-is actually ready, rather than showing an empty black picture. Closing only
-hides the window. Choose **Stop Mirroring** in the menu bar, or stop mirroring
-from your iPhone's Control Center, to disconnect. The menu action clears and
-hides the picture (leaving full screen first), then makes the receiver available
-again without quitting MirrorDeck. A newly shown mirror opens in the center of
-its screen; moving or resizing a visible window does not force it back there.
-While idle, the window uses a 9:18 phone-shaped canvas. Connecting follows the
-device's actual aspect ratio; disconnecting restores the default phone shape.
+即使尚未连接手机，也可以在菜单栏选择 **显示投屏窗口** 查看连接说明。等待页面会一直显示，
+直到第一帧视频真正准备好，不会出现空白黑屏。关闭窗口只会隐藏它。选择菜单栏中的
+**停止投屏**，或在 iPhone 控制中心停止投屏，即可断开连接。该操作会先退出全屏、清除并隐藏画面，
+然后让接收器重新可用，不会退出 TinyMirror。
 
-Drag the title bar or picture to move the window. Resizing preserves the video
-aspect ratio, and rotating the phone fits the new orientation to your display
-without cropping the picture.
+新显示的投屏窗口会在屏幕中央打开；移动或调整可见窗口的大小不会强制它回到中央。空闲时窗口使用
+9:18 的手机比例画布；连接后会按照设备的实际比例显示，断开后恢复默认手机比例。
 
-Choose **Keep Window on Top** in the menu bar to float the mirror above other
-applications. It is on by default, and your choice is remembered across launches.
+拖动标题栏或画面可以移动窗口。调整大小时会保持视频比例；旋转手机后，画面会适配显示器且不会被裁切。
 
-With the mirror window active, **⌘M** shows it, **⌘⇧M** stops mirroring,
-**⌘T** toggles always-on-top, and **⌘Q** quits MirrorDeck. These are app shortcuts, not global hotkeys.
+在菜单栏选择 **窗口置顶**，可以让投屏窗口浮在其他应用上方。该选项默认开启，并会在重启后保留。
 
-## Resolution and picture quality
+投屏窗口处于活动状态时：**⌘M** 显示窗口，**⌘⇧M** 停止投屏，**⌘T** 切换窗口置顶，
+**⌘Q** 退出 TinyMirror。这些是应用快捷键，不是全局热键。
 
-Choose **Resolution** in the menu bar: **720p**, **1080p**, **2K (1440p)** (the default),
-or **4K**. A previously saved choice is kept. Stop mirroring before changing it, then reconnect from the
-iPhone. The choice is remembered; changing it while idle restarts the receiver.
-1440p and 4K enable HEVC alongside H.264. They need a compatible sender and a
-strong network; they are requests, not guarantees. The menu shows the actual
-received pixel dimensions and codec while streaming.
+## 分辨率与画质
 
-AirPlay uses the requested display height to negotiate the stream. For example,
-a portrait phone may send about 498×1080 for the 1080p preset, rather than a
-1920×1080 landscape picture. Enlarging that image cannot recover missing detail;
-a higher preset can help only if the phone actually sends more pixels. Bitrate
-and compression quality remain controlled by iOS.
+在菜单栏的 **分辨率** 菜单中选择 **720p**、**1080p**、**2K（1440p）**（默认）或 **4K**。
+选择会被保存。修改前请先停止投屏，然后从 iPhone 重新连接；空闲时修改分辨率会重启接收器。
+1440p 和 4K 会在 H.264 之外启用 HEVC，需要发送端支持和稳定的网络；它们只是请求，不保证实际协商成功。
+投屏过程中菜单会显示实际接收的像素尺寸和编码格式。
 
-## Languages
+AirPlay 使用请求的显示高度协商视频流。例如，竖屏手机在 1080p 预设下可能发送约 498×1080 的画面，
+而不是 1920×1080 的横屏画面。放大图片无法恢复缺失的细节；只有手机实际发送更多像素时，更高预设才会有帮助。
+码率和压缩质量仍由 iOS 控制。
 
-The app supports **English** and **Simplified Chinese**, following the macOS
-system/app language setting. Other languages fall back to English. Menu items,
-connection and error messages, accessibility descriptions, and the local network
-permission prompt are localized. Device names and the MirrorDeck name are unchanged.
-Restart the app after changing its language in System Settings.
+## 语言
 
-## Known limitations
+应用支持**英文**和**简体中文**，跟随 macOS 的系统或应用语言设置。其他语言会回退到英文。
+菜单项、连接和错误提示、辅助功能说明以及本地网络权限提示均已本地化。设备名称和 TinyMirror 名称不会翻译。
+在系统设置中修改语言后，请重新启动应用。
 
-Worth reading before you install — some of these are permanent.
+## 已知限制
 
-- **No audio.** Video only; audio frames are currently discarded.
-- **Display only.** Touch, keyboard, and pointer forwarding are not supported.
-- **No Mac App Store.** The App Store accepts neither the AirPlay
-  implementation nor GPL-licensed code. Direct download is the only route, the
-  same one Reflector and AirServer take.
+安装前请注意，以下部分限制是长期存在的：
 
-## Troubleshooting
+- **没有音频。** 当前仅支持视频，音频帧会被丢弃。
+- **仅显示画面。** 不支持触控、键盘和鼠标转发。
+- **不支持 Mac App Store。** App Store 不接受此 AirPlay 实现及 GPL 许可代码，因此只能直接下载使用。
 
-**The menu bar icon doesn't appear.** On a Mac with a notch, macOS can place a
-new status item *behind the notch*, where it renders as nothing and cannot be
-clicked — even with free space beside it. MirrorDeck seeds a menu bar position
-on first launch to avoid that. If the icon is still missing, your menu bar is
-genuinely full: quit a menu bar app or two. You can ⌘-drag the icon anywhere
-afterwards and the position is remembered.
+## 故障排查
 
-Run with `MIRRORDECK_DEBUG=1` to have the app report exactly where it placed the
-icon and whether that is behind the notch.
+**菜单栏图标没有出现。** 在带刘海的 Mac 上，macOS 可能会把新状态项放到**刘海后面**，
+导致它不可见、不可点击，即使旁边还有空位。TinyMirror 首次启动时会预设菜单栏位置以避免这种情况。
+如果图标仍然不见，说明菜单栏确实已满，请退出一两个菜单栏应用。之后可以按住 ⌘ 拖动图标，位置会被记住。
 
-**Mirroring doesn't appear in Control Center.** Check both devices are on the
-same network, and that MirrorDeck has local network permission (System Settings
-→ Privacy & Security → Local Network).
+使用 `TINYMIRROR_DEBUG=1` 启动应用，可以查看图标的具体位置以及是否位于刘海后面。
 
-## Building from source
+**控制中心没有出现投屏目标。** 确认两台设备连接到同一网络，并在“系统设置 → 隐私与安全性 → 本地网络”中允许 TinyMirror 访问本地网络。
 
-Requires Xcode, CMake 3.22+ and Homebrew's `pkg-config` (`pkgconf`):
-`brew install cmake pkg-config`.
+## 从源码构建
 
-The first build downloads SHA-256-verified OpenSSL 3.5.9 and libplist 2.8.0 source
-archives and builds static libraries for macOS 26 under `.build/deps/macos26`.
-This needs network access once and takes longer than incremental builds. Homebrew's
-OpenSSL/libplist binaries are not used: newer bottles may require a newer macOS
-version than the app supports. If `.build/` or those local dependencies are deleted,
-`make build` recreates them automatically and refreshes CMake's dependency paths.
+需要 Xcode、CMake 3.22+ 和 Homebrew 的 `pkg-config`（`pkgconf`）：
 
 ```sh
-make build    # fetch pinned UxPlay, incrementally build the core + Debug app
-make run      # build and launch dist/MirrorDeck.app
-make install  # build Debug and install to /Applications/MirrorDeck.app
-make clean    # remove compiled products and dist/; keep dependencies and local config
+brew install cmake pkg-config
 ```
 
-`make` defaults to `build`. Installation always builds Debug for temporary local
-use; there is no Release install option. Use
-`make install INSTALL_DIR="$HOME/Applications"` to choose a different
-installation directory. Quit a running MirrorDeck before `run` or `install`; these
-targets do not terminate an active mirroring session for you, and installation does
-not use `sudo` automatically.
-
-Every build assembles the executable, replaceable native library, localizations,
-permission metadata, icon and licenses into `dist/MirrorDeck.app`. Local bundles
-are ad-hoc signed, as are the app and disk image made by the packaging script.
-No Apple account, signing certificate, keychain identity lookup or notarization
-service is used. Installation stages and verifies the new app before replacing an
-existing copy, restores the previous copy if replacement fails, and leaves user
-preferences untouched.
-
-`clean` preserves `vendor/`, `.build/deps/`, dependency source checkouts, SwiftPM
-configuration and the native CMake cache. The native dependency paths are regenerated from
-the project-managed macOS 26 prefix, so deleted dependencies or stale pkg-config
-cache entries do not require hand-editing CMake settings. Only the native compiled
-targets, Swift products and `dist/` are cleaned.
-
-### Regression checks
-
-Window layout and reconnect checks run without a phone or the native AirPlay library:
+首次构建会下载经过 SHA-256 校验的 OpenSSL 3.5.9 和 libplist 2.8.0 源码，并在
+`.build/deps/macos26` 下为 macOS 26 构建静态库。首次构建需要网络，耗时也会比增量构建更长。
+不会使用 Homebrew 的 OpenSSL/libplist 二进制包，因为较新的 bottle 可能要求更高版本的 macOS。
+如果删除了 `.build/` 或本地依赖，`make build` 会自动重新创建并刷新 CMake 的依赖路径。
 
 ```sh
-mkdir -p .build/module-cache
-swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController}.swift scripts/TestResources.swift scripts/check-window.swift -o .build/check-window
-.build/check-window              # add --snapshots for light/dark layouts with labeled synthetic content
-swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/VideoPipeline.swift scripts/check-video.swift -o .build/check-video
-.build/check-video
-swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/Localization.swift scripts/TestResources.swift scripts/check-localizations.swift -o .build/check-localizations
-.build/check-localizations -AppleLanguages '(en)'
-.build/check-localizations -AppleLanguages '(zh-Hans)'
-.build/check-localizations -AppleLanguages '(fr)'  # English fallback
-.build/check-window -AppleLanguages '(zh-Hans)'   # Chinese layout and window behavior
+make build    # 获取固定版本的 UxPlay，增量构建 native core 和 Debug 应用
+make run      # 构建并启动 dist/TinyMirror.app
+make install  # 构建 Debug 版本并安装到 /Applications/TinyMirror.app
+make clean    # 删除构建产物、dist/ 和 native/build/
 ```
 
-After `make build`, `python3 scripts/check-build.py` verifies the assembled app,
-ad-hoc signatures, installation and replacement rollback using temporary
-locations under `.build/`, without writing to `/Applications`.
-`python3 scripts/check-native-deps.py` also verifies a fresh native configuration
-with poisoned old dependency paths and checks every static object's deployment target.
+`make` 默认执行 `build`。安装始终构建 Debug 版本，没有 Release 安装选项。使用
+`make install INSTALL_DIR="$HOME/Applications"` 可以指定其他安装目录。执行 `run` 或 `install` 前请退出正在运行的 TinyMirror；
+这些目标不会替你终止正在进行的投屏，安装也不会自动使用 `sudo`。
 
-### Distribution
+每次构建都会将可执行文件、可替换的 native 库、本地化资源、权限元数据、图标和许可证组装到
+`dist/TinyMirror.app`。本地 App 和打包脚本生成的磁盘映像均使用 ad-hoc 签名，不需要 Apple 账号、
+签名证书、钥匙串身份或公证服务。安装时会先暂存并验证新版本，再替换已有版本；替换失败会恢复旧版本，
+且不会修改用户偏好设置。
 
-To produce a Release app and disk image:
+`make clean` 会删除 `.build/`、`dist/` 和 `native/build/`，包括本地依赖、依赖源码、SwiftPM 配置和 native CMake 缓存。
+下次构建会自动恢复这些内容。
+
+### 发布
+
+生成 Release 应用和磁盘映像：
 
 ```sh
-./scripts/package.sh                 # -> dist/MirrorDeck.app + dist/MirrorDeck-<ver>.dmg
+./scripts/package.sh                 # -> dist/TinyMirror.app + dist/TinyMirror-<ver>.dmg
 VERSION=0.2.0 ./scripts/package.sh
 ```
 
-`package.sh` uses `make build CONFIGURATION=release` for the same bundle assembly,
-then creates and ad-hoc signs the disk image. Ad-hoc signatures provide code
-integrity, not developer identity or notarization, so Gatekeeper may block
-quarantined downloads. The old `NOTARIZE=1` option now fails with an explicit
-message; ad-hoc builds cannot be submitted for Apple notarization.
+`package.sh` 会执行 `make build CONFIGURATION=release`，使用同一套应用组装流程，然后创建并签名磁盘映像。
+Ad-hoc 签名只提供代码完整性，不证明开发者身份，也不等同于公证，因此 Gatekeeper 可能阻止带隔离属性的下载文件。
+旧的 `NOTARIZE=1` 选项现在会明确失败；ad-hoc 构建不能提交给 Apple 公证。
 
-## How it works
+## 工作原理
 
-```
-iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP/H.264 or HEVC)──▶ libMirrorCore.dylib
-                                                                     │ decrypted Annex-B H.264/HEVC
+```text
+iPhone ──(AirPlay：Bonjour + 配对 + FairPlay + RTSP/H.264 或 HEVC)──▶ libMirrorCore.dylib
+                                                                     │ 解密后的 Annex-B H.264/HEVC
                                                                      ▼
-                                              Swift app: VideoPipeline ▶ AVSampleBufferDisplayLayer
+                                              Swift 应用：VideoPipeline ▶ AVSampleBufferDisplayLayer
 ```
 
-- **`native/`** — `mirror_bridge.c` wraps the vendored AirPlay protocol core
-  behind a small C API (`mb_start_video`, compatible `mb_start`, and `mb_stop`), built as
-  `libMirrorCore.dylib` by `make build` (via `native/build.sh`). All third-party code lives here and nowhere else.
-- **`Sources/MirrorDeck/`** — the app: menu bar shell, native mirror window,
-  and H.264/HEVC → `AVSampleBufferDisplayLayer` pipeline (native decode).
-- **`vendor/`** — [UxPlay](https://github.com/FDH2/UxPlay), fetched at a pinned
-  commit by `scripts/bootstrap.sh` rather than committed.
-- **`web/`** — the project landing page.
+- **`native/`**：`mirror_bridge.c` 将 vendored AirPlay 协议核心封装为简洁的 C API（`mb_start_video`、兼容的
+  `mb_start` 和 `mb_stop`），由 `make build`（通过 `native/build.sh`）构建为 `libMirrorCore.dylib`。
+  所有第三方代码只位于这里。
+- **`Sources/TinyMirror/`**：应用本身，包括菜单栏外壳、原生投屏窗口和 H.264/HEVC →
+  `AVSampleBufferDisplayLayer` 视频管线（由系统解码）。
+- **`vendor/`**：[UxPlay](https://github.com/FDH2/UxPlay) 的源码目录，由 `scripts/bootstrap.sh` 按固定 commit 获取，不提交到仓库。
 
-## Roadmap
+## 路线图
 
-- [ ] Audio playback (AAC-ELD decode via AudioToolbox)
-- [x] H.265/HEVC support and selectable resolution requests
+- [ ] 音频播放（使用 AudioToolbox 解码 AAC-ELD）
+- [x] H.265/HEVC 支持和可选分辨率请求
 
-Contributions welcome.
+欢迎贡献代码。
 
-## License
+## 许可证
 
-GPL-3.0 — see [LICENSE](LICENSE).
+GPL-3.0，详见 [LICENSE](LICENSE)。
 
-MirrorDeck is GPL-3.0 because `playfair`, the FairPlay handshake implementation
-it depends on, is GPL-3.0 and cannot be removed: `fairplay_decrypt()` recovers
-the media keys, so nothing mirrors without it.
+TinyMirror 使用 GPL-3.0，是因为它依赖的 FairPlay 握手实现 `playfair` 使用 GPL-3.0，且无法移除：
+`fairplay_decrypt()` 会恢复媒体密钥，没有它就无法建立投屏会话。
 
-Third-party components, all confined to `libMirrorCore.dylib`:
+第三方组件全部位于 `libMirrorCore.dylib` 中：
 
-| Component | Origin | License |
+| 组件 | 来源 | 许可证 |
 |---|---|---|
-| AirPlay/RAOP core | UxPlay `lib/` | LGPL-2.1-or-later |
-| `playfair` (FairPlay) | UxPlay `lib/playfair/` | GPL-3.0 |
+| AirPlay/RAOP 核心 | UxPlay `lib/` | LGPL-2.1-or-later |
+| `playfair`（FairPlay） | UxPlay `lib/playfair/` | GPL-3.0 |
 | llhttp | UxPlay `lib/llhttp/` | MIT |
 | libplist | libimobiledevice | LGPL-2.1-or-later |
 | libcrypto | OpenSSL 3 | Apache-2.0 |
 
-The LGPL relinking obligation is met structurally: those components live in a
-replaceable shared library exporting only the `mb_*` bridge API, so anyone
-can rebuild it with `./native/build.sh` and substitute their own build. See
-[licenses/NOTICE.md](licenses/NOTICE.md).
+LGPL 的重新链接义务通过结构设计满足：这些组件位于可替换的共享库中，只导出 `mb_*` 桥接 API，
+任何人都可以使用 `./native/build.sh` 重新构建并替换自己的版本。详见 [licenses/NOTICE.md](licenses/NOTICE.md)。
 
-### A note on FairPlay
+### 关于 FairPlay
 
-Two different things share the FairPlay name, and they are worth separating.
+FairPlay 这个名称指代两种不同的东西，需要区分：
 
-**FairPlay Streaming** is the content DRM protecting Netflix, Disney+ and Apple
-TV+. It needs hardware-backed keys. MirrorDeck does not have them and cannot
-obtain them — protected video will black out when mirrored, exactly as it does
-with every other third-party receiver. iOS excludes protected layers from the
-mirrored capture before anything is encoded, so this is enforced by the phone,
-not by us.
+**FairPlay Streaming** 是 Netflix、Disney+ 和 Apple TV+ 使用的内容 DRM，需要硬件密钥。
+TinyMirror 没有这些密钥，也无法获取它们；受保护的视频会像在其他第三方接收器上一样显示为黑屏。
+iOS 会在编码前将受保护图层排除在镜像画面之外，所以这是手机端的限制，不是 TinyMirror 实现的限制。
 
-**FairPlay SAP** is the session handshake, and it is what `playfair` implements.
-It answers an authentication challenge so the phone will release the key for
-*its own screen*. That is all it does: `fairplay_decrypt()` turns the 72-byte
-key the phone sends during setup into the 16-byte AES key for the mirroring
-stream. It is not optional — without it no session starts at all.
+**FairPlay SAP** 是会话握手协议，由 `playfair` 实现。它响应认证挑战，让手机释放**自己的屏幕**所需的密钥。
+`fairplay_decrypt()` 会把手机在建立会话时发送的 72 字节密钥转换成投屏流使用的 16 字节 AES 密钥。
+它不是可选功能；没有它，任何投屏会话都无法启动。
 
-So MirrorDeck decrypts no copyrighted work. It authenticates to a protocol so a
-device can show its own screen on its owner's computer. Every open-source AirPlay
-receiver depends on the same handshake, and the commercial ones reverse-engineer
-it too.
+因此 TinyMirror 不会解密任何受版权保护的作品。它只是完成协议认证，让设备在设备所有者的电脑上显示自己的屏幕。
+所有开源 AirPlay 接收器都依赖同一握手协议，商业产品也需要逆向实现它。
 
-Following the practice of [UxPlay](https://github.com/FDH2/UxPlay) and
-[RPiPlay](https://github.com/FD-/RPiPlay), on which this work builds:
+本项目参考了 [UxPlay](https://github.com/FDH2/UxPlay) 和 [RPiPlay](https://github.com/FD-/RPiPlay)：
 
-> This project is built from freely available information and is intended for
-> educational purposes. It is the user's responsibility to comply with local
-> law. It depends on a third-party GPL library for the FairPlay handshake whose
-> legal status is unclear. If you represent Apple and object to that library or
-> its use here, please open an issue or contact the maintainer and appropriate
-> steps will be taken.
+> 本项目基于公开可用的信息构建，仅用于教育目的。用户有责任遵守当地法律。
+> 本项目依赖用于 FairPlay 握手的第三方 GPL 库，其法律地位并不明确。
+> 如果你代表 Apple 并反对该库或其在本项目中的使用，请提交 issue 或联系维护者，以便采取适当措施。
 
 ---
 
-Built on the work of [UxPlay](https://github.com/FDH2/UxPlay), whose AirPlay
-implementation makes the mirroring possible. Not affiliated with or endorsed
-by Apple Inc.
+本项目建立在 [UxPlay](https://github.com/FDH2/UxPlay) 的工作之上，其 AirPlay 实现使投屏成为可能。
+本项目与 Apple Inc. 没有关联，也未获得 Apple Inc. 的认可。

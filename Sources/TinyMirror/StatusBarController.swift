@@ -16,7 +16,7 @@ final class StatusBarController {
     var onQuit: (() -> Void)?
     var onToggleAlwaysOnTop: ((Bool) -> Void)?
     var onResolutionChange: ((MirrorResolution) -> Void)?
-    private static let autosaveName = "MirrorDeckStatusItem"
+    private static let autosaveName = "TinyMirrorStatusItem"
 
     init() {
         // Given no stored preference, macOS picks a slot for a new item that on
@@ -33,8 +33,8 @@ final class StatusBarController {
         statusItem.autosaveName = Self.autosaveName
         statusItem.button?.image = NSImage(
             systemSymbolName: "iphone.gen3",
-            accessibilityDescription: "MirrorDeck")
-        statusItem.button?.toolTip = "MirrorDeck"
+            accessibilityDescription: "TinyMirror")
+        statusItem.button?.toolTip = "TinyMirror"
 
         showItem = NSMenuItem(title: String(localized: "Show Mirror Window", bundle: .appLocalization), action: #selector(showWindow), keyEquivalent: "m")
         onTopItem = NSMenuItem(title: String(localized: "Keep Window on Top", bundle: .appLocalization), action: #selector(toggleOnTop), keyEquivalent: "t")
@@ -48,7 +48,7 @@ final class StatusBarController {
         clientItem.isEnabled = false
         showItem.target = self
         onTopItem.target = self
-        let quitItem = NSMenuItem(title: String(localized: "Quit MirrorDeck", bundle: .appLocalization), action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: String(localized: "Quit TinyMirror", bundle: .appLocalization), action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
 
         menu.addItem(stateItem)
@@ -81,7 +81,7 @@ final class StatusBarController {
 
         // Status-item menus alone are not searched for active-window shortcuts.
         let mainMenu = NSMenu()
-        let appItem = NSMenuItem(title: "MirrorDeck", action: nil, keyEquivalent: "")
+        let appItem = NSMenuItem(title: "TinyMirror", action: nil, keyEquivalent: "")
         appItem.submenu = menu
         mainMenu.addItem(appItem)
         NSApp.mainMenu = mainMenu
@@ -138,20 +138,20 @@ final class StatusBarController {
     /// Logs where the icon ended up; both are invisible when something is wrong.
     func logPlacement() {
         guard let window = statusItem.button?.window else {
-            NSLog("[MirrorDeck] status item has no window — it was not placed")
+            NSLog("[TinyMirror] status item has no window — it was not placed")
             return
         }
         let frame = window.frame
-        NSLog("[MirrorDeck] status item at x=%.0f-%.0f y=%.0f visible=%@",
+        NSLog("[TinyMirror] status item at x=%.0f-%.0f y=%.0f visible=%@",
               frame.minX, frame.maxX, frame.minY,
               statusItem.isVisible ? "yes" : "no")
         guard let screen = window.screen ?? NSScreen.main,
               let left = screen.auxiliaryTopLeftArea,
               let right = screen.auxiliaryTopRightArea else {
-            NSLog("[MirrorDeck] display has no notch")
+            NSLog("[TinyMirror] display has no notch")
             return
         }
-        NSLog("[MirrorDeck] notch spans x=%.0f-%.0f -> icon %@",
+        NSLog("[TinyMirror] notch spans x=%.0f-%.0f -> icon %@",
               left.maxX, right.minX,
               isHiddenBehindNotch ? "IS BEHIND THE NOTCH (free menu bar space)"
                                   : "is clear of the notch")
@@ -165,7 +165,7 @@ final class StatusBarController {
         } ?? String(localized: "No device connected", bundle: .appLocalization)
         statusItem.button?.image = NSImage(
             systemSymbolName: name != nil ? "iphone.gen3.radiowaves.left.and.right" : "iphone.gen3",
-            accessibilityDescription: "MirrorDeck")
+            accessibilityDescription: "TinyMirror")
     }
 
     @objc private func stopMirroring() {
