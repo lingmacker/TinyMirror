@@ -1,128 +1,273 @@
 import AppKit
+import AVFoundation
 
-final class MirrorWindowController: NSWindowController, NSToolbarDelegate {
-    let videoView = MirrorVideoView()
-    private let pinButton = NSButton()
-    private let pinItemID = NSToolbarItem.Identifier("KeepOnTop")
+final class MirrorWindowController: NSWindowController, NSWindowDelegate {
+    enum PlaybackState { case waiting, connecting, mirroring, unavailable }
 
-    var onToggleAlwaysOnTop: ((Bool) -> Void)?
+    private let frameView = MirrorFrameView()
+    var videoView: MirrorVideoView { frameView.videoView }
+    private let waitingView = NSBox()
+    private let waitingTitle = NSTextField(labelWithString: "Ready to mirror")
+    private let waitingHint = NSTextField(wrappingLabelWithString: "")
+    private var receiverName = "MirrorDeck"
+    private var receiverAvailable = true
+    private var deviceName: String?
+    private var videoSize: NSSize = .zero
+    private var fullScreenVideoSize: NSSize = .zero
+    private var firstFrameReady = false
+    private var buttonTrackingArea: NSTrackingArea?
+    private(set) var playbackState = PlaybackState.waiting
 
     init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 340, height: 700),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 540),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
-        window.title = "iPhone"
-        window.subtitle = "Screen Mirroring"
-        window.backgroundColor = .black
+        window.title = "MirrorDeck"
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        window.backgroundColor = .clear
+        window.isOpaque = false
+        window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.fullScreenPrimary]
+        window.minSize = NSSize(width: 320, height: 360)
         super.init(window: window)
-
-        videoView.frame = window.contentView!.bounds
-        videoView.autoresizingMask = [.width, .height]
-        window.contentView = videoView
-
-        pinButton.bezelStyle = .accessoryBarAction
-        pinButton.setButtonType(.pushOnPushOff)
-        pinButton.image = NSImage(systemSymbolName: "pin", accessibilityDescription: "Keep Window on Top")
-        pinButton.imagePosition = .imageOnly
-        pinButton.target = self
-        pinButton.action = #selector(toggleOnTop)
-        pinButton.frame = NSRect(x: 0, y: 0, width: 32, height: 28)
-        updatePinButton()
-
-        let toolbar = NSToolbar(identifier: "MirrorToolbar")
-        toolbar.delegate = self
-        toolbar.displayMode = .iconOnly
-        window.toolbarStyle = .unifiedCompact
-        window.toolbar = toolbar
+        window.delegate = self
+        frameView.frame = window.contentView!.bounds
+        frameView.autoresizingMask = [.width, .height]
+        window.contentView = frameView
+        frameView.layoutSubtreeIfNeeded()
+        buildWaitingView()
+        refreshWindowButtons()
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(videoReadinessChanged),
+            name: .AVSampleBufferDisplayLayerReadyForDisplayDidChange,
+            object: videoView.displayLayer)
+        updatePlaybackState()
+        window.center()
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.flexibleSpace, pinItemID]
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
-    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        toolbarDefaultItemIdentifiers(toolbar)
+    private func buildWaitingView() {
+        waitingView.boxType = .custom
+        waitingView.borderWidth = 0
+        waitingView.titlePosition = .noTitle
+        waitingView.fillColor = .windowBackgroundColor
+        waitingView.contentViewMargins = .zero
+        waitingView.frame = videoView.bounds
+        waitingView.autoresizingMask = [.width, .height]
+        videoView.addSubview(waitingView)
+
+        let symbol = NSImageView(image: NSImage(
+            systemSymbolName: "airplay.video", accessibilityDescription: nil)!)
+        symbol.symbolConfiguration = .init(pointSize: 36, weight: .light)
+        symbol.contentTintColor = .secondaryLabelColor
+        waitingTitle.font = .systemFont(ofSize: 20, weight: .semibold)
+        waitingHint.font = .systemFont(ofSize: 13)
+        waitingHint.textColor = .secondaryLabelColor
+        waitingHint.alignment = .center
+        waitingTitle.alignment = .center
+        let stack = NSStackView(views: [symbol, waitingTitle, waitingHint])
+        stack.orientation = .vertical
+        stack.spacing = 14
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        waitingView.contentView!.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: waitingView.contentView!.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: waitingView.contentView!.centerYAnchor, constant: -16),
+            stack.widthAnchor.constraint(lessThanOrEqualToConstant: 280),
+            stack.widthAnchor.constraint(lessThanOrEqualTo: waitingView.widthAnchor, constant: -48),
+            waitingHint.widthAnchor.constraint(equalTo: stack.widthAnchor),
+        ])
     }
 
-    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
-                 willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
-        guard identifier == pinItemID else { return nil }
-        let item = NSToolbarItem(itemIdentifier: identifier)
-        item.label = "Keep Window on Top"
-        item.view = pinButton
-        return item
+    func setReceiverState(name: String, isRunning: Bool) {
+        receiverName = name
+        receiverAvailable = isRunning
+        updatePlaybackState()
     }
 
-    func setDeviceName(_ name: String) {
-        window?.title = name
+    func setDeviceName(_ name: String?) {
+        if name != deviceName || name == nil { firstFrameReady = false }
+        deviceName = name
+        if name == nil {
+            videoSize = .zero
+            window?.aspectRatio = .zero
+            window?.minSize = NSSize(width: 320, height: 360)
+        }
+        updatePlaybackState()
     }
+
+    @objc private func videoReadinessChanged(_ notification: Notification) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.firstFrameReady = self.videoView.displayLayer.isReadyForDisplay
+            self.updatePlaybackState()
+        }
+    }
+
+    private func updatePlaybackState() {
+        if deviceName != nil {
+            playbackState = firstFrameReady ? .mirroring : .connecting
+        } else {
+            playbackState = receiverAvailable ? .waiting : .unavailable
+        }
+        window?.title = deviceName ?? "MirrorDeck"
+        waitingView.isHidden = playbackState == .mirroring
+        switch playbackState {
+        case .waiting:
+            waitingTitle.stringValue = "Ready to mirror"
+            waitingHint.stringValue = "On your iPhone, open Control Center → Screen Mirroring and choose “\(receiverName)”."
+        case .connecting:
+            waitingTitle.stringValue = "Waiting for your screen"
+            waitingHint.stringValue = "Keep Screen Mirroring enabled on your iPhone. The picture will appear here."
+        case .mirroring:
+            break
+        case .unavailable:
+            waitingTitle.stringValue = "Unable to start mirroring"
+            waitingHint.stringValue = "Quit and reopen MirrorDeck to try again. Check that local network access is allowed in System Settings."
+        }
+    }
+
+    private func setWindowButtonsVisible(_ hovering: Bool) {
+        guard let window else { return }
+        // Full screen owns its title-bar reveal; VoiceOver must retain native actions.
+        let visible = hovering || window.styleMask.contains(.fullScreen) || NSWorkspace.shared.isVoiceOverEnabled
+        for type in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+            window.standardWindowButton(type)?.isHidden = !visible
+        }
+    }
+
+    private func refreshWindowButtons() {
+        guard let window else { return }
+        guard !window.styleMask.contains(.fullScreen) else {
+            setWindowButtonsVisible(true)
+            return
+        }
+        let rect = [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton]
+            .compactMap { window.standardWindowButton($0) }
+            .reduce(NSRect.null) { $0.union(frameView.convert($1.bounds, from: $1)) }
+            .insetBy(dx: -8, dy: -8).intersection(frameView.bounds)
+        if buttonTrackingArea?.rect != rect {
+            if let buttonTrackingArea { frameView.removeTrackingArea(buttonTrackingArea) }
+            let area = NSTrackingArea(
+                rect: rect, options: [.mouseEnteredAndExited, .activeAlways, .enabledDuringMouseDrag],
+                owner: self, userInfo: nil)
+            frameView.addTrackingArea(area)
+            buttonTrackingArea = area
+        }
+        let point = frameView.convert(window.mouseLocationOutsideOfEventStream, from: nil)
+        setWindowButtonsVisible(window.isVisible && rect.contains(point))
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        let point = frameView.convert(event.locationInWindow, from: nil)
+        setWindowButtonsVisible(buttonTrackingArea?.rect.contains(point) == true)
+    }
+    override func mouseExited(with event: NSEvent) { setWindowButtonsVisible(false) }
+
+    func windowDidMove(_ notification: Notification) { refreshWindowButtons() }
+    func windowDidResize(_ notification: Notification) {
+        frameView.needsLayout = true
+        frameView.layoutSubtreeIfNeeded()
+        refreshWindowButtons()
+    }
+    func windowWillClose(_ notification: Notification) { setWindowButtonsVisible(false) }
 
     var isAlwaysOnTop = false {
-        didSet {
-            window?.level = isAlwaysOnTop ? .floating : .normal
-            updatePinButton()
+        didSet { updateWindowLevel() }
+    }
+
+    private func updateWindowLevel() {
+        window?.level = isAlwaysOnTop && window?.styleMask.contains(.fullScreen) != true ? .floating : .normal
+    }
+
+    override func cancelOperation(_ sender: Any?) {
+        if window?.styleMask.contains(.fullScreen) == true {
+            window?.toggleFullScreen(nil)
         }
     }
 
-    private func updatePinButton() {
-        pinButton.state = isAlwaysOnTop ? .on : .off
-        pinButton.image = NSImage(
-            systemSymbolName: isAlwaysOnTop ? "pin.fill" : "pin",
-            accessibilityDescription: "Keep Window on Top")
-        pinButton.toolTip = isAlwaysOnTop ? "Stop Keeping Window on Top" : "Keep Window on Top"
-        pinButton.setAccessibilityLabel("Keep Window on Top")
-    }
-
-    @objc private func toggleOnTop() {
-        isAlwaysOnTop.toggle()
-        onToggleAlwaysOnTop?(isAlwaysOnTop)
-    }
-
-    /// Size the picture, not the window chrome, and fit both screen dimensions.
+    /// The bezel sits outside the picture, so only the inner rectangle follows the video ratio.
     func setVideoDimensions(width: Int, height: Int) {
         guard let window, width > 0, height > 0 else { return }
-        let videoSize = NSSize(width: width, height: height)
-        window.contentAspectRatio = videoSize
-        let screen = window.screen?.visibleFrame
-            ?? NSScreen.main?.visibleFrame
+        videoSize = NSSize(width: width, height: height)
+        window.aspectRatio = .zero
+        guard !frameView.isFullScreen, !window.styleMask.contains(.fullScreen) else { return }
+        let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
             ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let chromeHeight = window.frame.height - window.contentLayoutRect.height
         let aspect = videoSize.width / videoSize.height
-        let videoHeight = min(min(screen.height * 0.8 - chromeHeight, 780),
-                              screen.width * 0.8 / aspect)
-        let size = NSSize(width: videoHeight * aspect, height: videoHeight)
-        let minWidth = min(240, size.width)
-        window.contentMinSize = NSSize(width: minWidth, height: minWidth / aspect)
+        let border = frameView.contentInset * 2
+        let targetHeight = min(780, screen.height * 0.8 - border, (screen.width * 0.8 - border) / aspect)
+        let pictureWidth = targetHeight * aspect
+        let size = NSSize(width: pictureWidth + border, height: targetHeight + border)
+        let minWidth = min(pictureWidth, max(260, 160 * aspect))
+        window.minSize = NSSize(width: minWidth + border, height: minWidth / aspect + border)
+        let center = window.isVisible
+            ? NSPoint(x: window.frame.midX, y: window.frame.midY)
+            : NSPoint(x: screen.maxX - size.width / 2 - 48, y: screen.midY)
+        let origin = NSPoint(
+            x: max(screen.minX, min(center.x - size.width / 2, screen.maxX - size.width)),
+            y: max(screen.minY, min(center.y - size.height / 2, screen.maxY - size.height)))
+        window.setFrame(NSRect(origin: origin, size: size), display: true)
+    }
 
-        // Full screen keeps the display's frame and aspect-fits the new picture.
-        guard !window.styleMask.contains(.fullScreen) else { return }
-        var frame = window.frameRect(forContentRect: NSRect(origin: .zero, size: size))
-        if window.isVisible {
-            frame.origin = NSPoint(x: window.frame.midX - frame.width / 2,
-                                   y: window.frame.midY - frame.height / 2)
-        } else {
-            frame.origin = NSPoint(x: screen.maxX - frame.width - 48,
-                                   y: screen.midY - frame.height / 2)
+    func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+        guard videoSize != .zero, !frameView.isFullScreen, !sender.styleMask.contains(.fullScreen) else { return frameSize }
+        let border = frameView.contentInset * 2
+        let aspect = videoSize.width / videoSize.height
+        let width = max(frameSize.width, sender.minSize.width)
+        let height = max(frameSize.height, sender.minSize.height)
+        if abs(frameSize.width - sender.frame.width) > abs(frameSize.height - sender.frame.height) * aspect {
+            return NSSize(width: width, height: (width - border) / aspect + border)
         }
-        frame.origin.x = max(screen.minX, min(frame.origin.x, screen.maxX - frame.width))
-        frame.origin.y = max(screen.minY, min(frame.origin.y, screen.maxY - frame.height))
-        window.setFrame(frame, display: true)
+        return NSSize(width: (height - border) * aspect + border, height: height)
+    }
+
+    func windowWillEnterFullScreen(_ notification: Notification) {
+        fullScreenVideoSize = videoSize
+        frameView.isFullScreen = true
+        frameView.layoutSubtreeIfNeeded()
+        setWindowButtonsVisible(true)
+        window?.level = .normal
+    }
+
+    func windowDidExitFullScreen(_ notification: Notification) {
+        frameView.isFullScreen = false
+        frameView.layoutSubtreeIfNeeded()
+        updateWindowLevel()
+        if videoSize != .zero && videoSize != fullScreenVideoSize {
+            setVideoDimensions(width: Int(videoSize.width), height: Int(videoSize.height))
+        }
+        refreshWindowButtons()
+    }
+
+    func windowDidFailToEnterFullScreen(_ window: NSWindow) {
+        frameView.isFullScreen = false
+        frameView.layoutSubtreeIfNeeded()
+        updateWindowLevel()
+        refreshWindowButtons()
     }
 
     func present() {
         guard let window else { return }
         if window.isMiniaturized { window.deminiaturize(nil) }
         window.makeKeyAndOrderFront(nil)
+        window.makeFirstResponder(videoView)
         NSApp.activate(ignoringOtherApps: true)
+        refreshWindowButtons()
     }
 
     func dismiss() {
         window?.orderOut(nil)
+        setWindowButtonsVisible(false)
     }
 }

@@ -38,7 +38,6 @@ final class StatusBarController {
         stateItem.isEnabled = false
         clientItem.isEnabled = false
         showItem.target = self
-        showItem.isEnabled = false
         onTopItem.target = self
         let quitItem = NSMenuItem(title: "Quit MirrorDeck", action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
@@ -105,7 +104,6 @@ final class StatusBarController {
 
     func setClient(_ name: String?) {
         clientItem.title = name.map { "Mirroring: \($0)" } ?? "No device connected"
-        showItem.isEnabled = name != nil
         statusItem.button?.image = NSImage(
             systemSymbolName: name != nil ? "iphone.gen3.radiowaves.left.and.right" : "iphone.gen3",
             accessibilityDescription: "MirrorDeck")

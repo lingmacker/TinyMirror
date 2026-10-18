@@ -44,9 +44,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.onToggleAlwaysOnTop = { [weak self] on in
             self?.setAlwaysOnTop(on)
         }
-        windowController.onToggleAlwaysOnTop = { [weak self] on in
-            self?.setAlwaysOnTop(on)
-        }
         setAlwaysOnTop(Settings.alwaysOnTop)
     }
 
@@ -60,7 +57,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startReceiver() {
         let name = Settings.receiverName
-        if receiver.start(name: name, debug: AppDelegate.debugEnabled) {
+        let started = receiver.start(name: name, debug: AppDelegate.debugEnabled)
+        windowController.setReceiverState(name: name, isRunning: started)
+        if started {
             statusBar.setReceiverState("Visible as “\(name)”")
             NSLog("[MirrorDeck] receiver started, advertising as “%@”", name)
         } else {
@@ -74,8 +73,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         if ProcessInfo.processInfo.environment["MIRRORDECK_PREVIEW"] == "1" {
-            windowController.setDeviceName("Preview")
-            windowController.setVideoDimensions(width: 1179, height: 2556)
             windowController.present()
         }
     }
@@ -113,6 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .disconnected:
             statusBar.setClient(nil)
             windowController.dismiss()
+            windowController.setDeviceName(nil)
             pipeline.reset()
         case .videoFlush:
             pipeline.flush()

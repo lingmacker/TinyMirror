@@ -36,7 +36,7 @@ final class VideoPipeline {
     func reset() {
         queue.async { [weak self] in
             guard let self else { return }
-            self.displayLayer?.flush()
+            self.displayLayer?.sampleBufferRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
             self.formatDescription = nil
             self.sps = nil
             self.pps = nil

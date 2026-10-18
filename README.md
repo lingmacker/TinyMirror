@@ -27,8 +27,9 @@ open it, and drag MirrorDeck to Applications.
 The app is signed with a Developer ID and notarized by Apple, so it opens
 without a Gatekeeper warning.
 
-MirrorDeck lives in the **menu bar** — there is no Dock icon and no window until
-a phone connects. On first launch macOS will ask for **local network
+MirrorDeck lives in the **menu bar**, without a Dock icon. The mirror window
+opens automatically when a phone connects; **Show Mirror Window** opens the
+connection guide at any time. On first launch macOS will ask for **local network
 permission**; mirroring cannot work without it.
 
 Then on your iPhone: **Control Center → Screen Mirroring → "‹your Mac› (MirrorDeck)"**.
@@ -43,18 +44,25 @@ Then on your iPhone: **Control Center → Screen Mirroring → "‹your Mac› (
 
 ## Mirror window
 
-The native title bar shows the device name. Use the standard macOS buttons to
-close, minimize, or enter full screen. Closing only hides the window; reopen it
-with **Show Mirror Window** in the menu bar. Stop mirroring from your iPhone's
-Control Center to disconnect.
+The picture sits inside a slim, 5-point graphite frame with softly rounded
+corners and the native window shadow. Full screen removes the frame for an
+edge-to-edge view. There are no floating controls. The native close, minimize,
+and full-screen buttons are hidden by default: hover near their
+top-left position to reveal them, and leave that area to hide them. Hovering the
+rest of the picture does not reveal the buttons. VoiceOver keeps
+the buttons available. **Escape** exits full screen.
+
+Choose **Show Mirror Window** in the menu bar even before connecting to see
+connection instructions. The waiting screen stays until the first video frame
+is actually ready, rather than showing an empty black picture. Closing only
+hides the window. Stop mirroring from your iPhone's Control Center to disconnect.
 
 Drag the title bar or picture to move the window. Resizing preserves the video
 aspect ratio, and rotating the phone fits the new orientation to your display
 without cropping the picture.
 
-Click the title bar's **pin** button or choose **Keep Window on Top** in the
-menu bar to float the mirror above other applications. Both controls stay in
-sync, and the preference is remembered across launches.
+Choose **Keep Window on Top** in the menu bar to float the mirror above other
+applications. The preference is remembered across launches.
 
 ## Known limitations
 
@@ -99,8 +107,8 @@ Window layout and reconnect checks run without a phone or the native AirPlay lib
 
 ```sh
 mkdir -p .build/module-cache
-swiftc -module-cache-path .build/module-cache Sources/MirrorDeck/Mirror{VideoView,WindowController}.swift scripts/check-window.swift -o .build/check-window
-.build/check-window              # add --snapshots to capture light/dark layouts
+swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/Mirror{VideoView,WindowController}.swift scripts/check-window.swift -o .build/check-window
+.build/check-window              # add --snapshots for light/dark layouts with labeled synthetic content
 swiftc -module-cache-path .build/module-cache Sources/MirrorDeck/VideoPipeline.swift scripts/check-video.swift -o .build/check-video
 .build/check-video
 ```
