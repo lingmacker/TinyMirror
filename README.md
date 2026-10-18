@@ -24,8 +24,10 @@ MirrorDeck is display-only: mouse and keyboard input stays on your Mac.
 Download the latest `.dmg` from **[Releases](https://github.com/egarl004/mirrordeck/releases/latest)**,
 open it, and drag MirrorDeck to Applications.
 
-The app is signed with a Developer ID and notarized by Apple, so it opens
-without a Gatekeeper warning.
+Builds use **ad-hoc signing**, not Developer ID signing or Apple notarization.
+Downloaded copies may be blocked by Gatekeeper on other Macs. Only open builds
+you trust; if macOS blocks one, use the explicit approval in System Settings →
+Privacy & Security rather than disabling Gatekeeper.
 
 MirrorDeck lives in the **menu bar**, without a Dock icon. The mirror window
 opens automatically when a phone connects; **Show Mirror Window** opens the
@@ -127,11 +129,31 @@ same network, and that MirrorDeck has local network permission (System Settings
 Requires Xcode, plus Homebrew `openssl@3`, `libplist`, `cmake`, `pkg-config`.
 
 ```sh
-./scripts/bootstrap.sh   # fetch UxPlay at a pinned commit
-./native/build.sh        # build the AirPlay core -> libMirrorCore.dylib
-swift build
-swift run MirrorDeck
+make build    # fetch pinned UxPlay, incrementally build the core + Debug app
+make run      # build and launch dist/MirrorDeck.app
+make install  # build Debug and install to /Applications/MirrorDeck.app
+make clean    # remove compiled products and dist/; keep dependencies and local config
 ```
+
+`make` defaults to `build`. Installation always builds Debug for temporary local
+use; there is no Release install option. Use
+`make install INSTALL_DIR="$HOME/Applications"` to choose a different
+installation directory. Quit a running MirrorDeck before `run` or `install`; these
+targets do not terminate an active mirroring session for you, and installation does
+not use `sudo` automatically.
+
+Every build assembles the executable, replaceable native library, localizations,
+permission metadata, icon and licenses into `dist/MirrorDeck.app`. Local bundles
+are ad-hoc signed, as are the app and disk image made by the packaging script.
+No Apple account, signing certificate, keychain identity lookup or notarization
+service is used. Installation stages and verifies the new app before replacing an
+existing copy, restores the previous copy if replacement fails, and leaves user
+preferences untouched.
+
+`clean` preserves `vendor/`, `.build/deps/`, dependency source checkouts, SwiftPM
+configuration and the native CMake cache. This also preserves locally selected
+macOS 26-compatible OpenSSL/libplist builds; only the native compiled targets,
+Swift products and `dist/` are cleaned.
 
 ### Regression checks
 
@@ -141,7 +163,7 @@ Window layout and reconnect checks run without a phone or the native AirPlay lib
 mkdir -p .build/module-cache
 swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/{Localization,MirrorVideoView,MirrorWindowController}.swift scripts/TestResources.swift scripts/check-window.swift -o .build/check-window
 .build/check-window              # add --snapshots for light/dark layouts with labeled synthetic content
-swiftc -module-cache-path .build/module-cache Sources/MirrorDeck/VideoPipeline.swift scripts/check-video.swift -o .build/check-video
+swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/VideoPipeline.swift scripts/check-video.swift -o .build/check-video
 .build/check-video
 swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-cache Sources/MirrorDeck/Localization.swift scripts/TestResources.swift scripts/check-localizations.swift -o .build/check-localizations
 .build/check-localizations -AppleLanguages '(en)'
@@ -150,27 +172,24 @@ swiftc -target "$(uname -m)-apple-macos26.0" -module-cache-path .build/module-ca
 .build/check-window -AppleLanguages '(zh-Hans)'   # Chinese layout and window behavior
 ```
 
+After `make build`, `python3 scripts/check-build.py` verifies the assembled app,
+ad-hoc signatures, installation and replacement rollback using temporary
+locations under `.build/`, without writing to `/Applications`.
+
 ### Distribution
 
-To produce a distributable app and disk image:
+To produce a Release app and disk image:
 
 ```sh
 ./scripts/package.sh                 # -> dist/MirrorDeck.app + dist/MirrorDeck-<ver>.dmg
-NOTARIZE=1 ./scripts/package.sh      # also notarize and staple both
+VERSION=0.2.0 ./scripts/package.sh
 ```
 
-`package.sh` signs with a *Developer ID Application* certificate when one exists
-and falls back to ad-hoc signing otherwise — ad-hoc builds run locally but
-Gatekeeper blocks them elsewhere. Notarization needs stored credentials once:
-
-```sh
-xcrun notarytool store-credentials mirrordeck \
-    --apple-id you@example.com --team-id YOURTEAM
-```
-
-The app-specific password comes from
-[appleid.apple.com](https://appleid.apple.com) → Sign-In and Security →
-App-Specific Passwords.
+`package.sh` uses `make build CONFIGURATION=release` for the same bundle assembly,
+then creates and ad-hoc signs the disk image. Ad-hoc signatures provide code
+integrity, not developer identity or notarization, so Gatekeeper may block
+quarantined downloads. The old `NOTARIZE=1` option now fails with an explicit
+message; ad-hoc builds cannot be submitted for Apple notarization.
 
 ## How it works
 
@@ -183,7 +202,7 @@ iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP/H.264 or HEVC)──�
 
 - **`native/`** — `mirror_bridge.c` wraps the vendored AirPlay protocol core
   behind a small C API (`mb_start_video`, compatible `mb_start`, and `mb_stop`), built as
-  `libMirrorCore.dylib`. All third-party code lives here and nowhere else.
+  `libMirrorCore.dylib` by `make build` (via `native/build.sh`). All third-party code lives here and nowhere else.
 - **`Sources/MirrorDeck/`** — the app: menu bar shell, native mirror window,
   and H.264/HEVC → `AVSampleBufferDisplayLayer` pipeline (native decode).
 - **`vendor/`** — [UxPlay](https://github.com/FDH2/UxPlay), fetched at a pinned

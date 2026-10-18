@@ -14,7 +14,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=26.
 cmake --build build -j"$(sysctl -n hw.ncpu)" --target mirrorcore
 
 # keep the SwiftPM-visible copy of the header in sync
-cp include/mirror_bridge.h ../Sources/CMirrorBridge/include/mirror_bridge.h
+cmp -s include/mirror_bridge.h ../Sources/CMirrorBridge/include/mirror_bridge.h || \
+    cp include/mirror_bridge.h ../Sources/CMirrorBridge/include/mirror_bridge.h
 
 DYLIB="build/libMirrorCore.dylib"
 echo

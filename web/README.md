@@ -54,8 +54,8 @@ Tools](https://www.bing.com/webmasters) does the same and also feeds DuckDuckGo.
       it is private.
 - [ ] **Create a release** so `/releases/latest` resolves. The Download button
       points there.
-- [x] **Sign and notarize the build.** Done — `NOTARIZE=1 ./scripts/package.sh`
-      produces a build Gatekeeper accepts.
+- [x] **Use ad-hoc signatures.** Build and packaging scripts use ad-hoc signing.
+      Builds are not notarized, and Gatekeeper may block downloaded copies.
 - [x] **Adopt a licence.** Done — GPL-3.0, see `LICENSE`.
 - [ ] **Decide on the donation section.** `index.html` has a clearly marked
       `#support` section; delete it to launch without any donation mechanism.
