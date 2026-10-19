@@ -33,14 +33,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         receiver.onVideo = { [pipeline] data, length, isH265, timestamp in
             pipeline.handleAccessUnit(data, length, isH265: isH265, timestamp: timestamp)
         }
-        receiver.onAudio = { [playback] data, length, ct, timestamp in
-            playback.handleAudio(data, length, compressionType: ct, timestamp: timestamp)
+        receiver.onAudio = { [playback] data, length, ct, timestamp, position in
+            playback.handleAudio(data, length, compressionType: ct, timestamp: timestamp, rtpTimestamp: position)
         }
         receiver.onAudioFormat = { [playback] ct, spf, usingScreen in
             playback.configureAudio(compressionType: ct, samplesPerFrame: spf, screenMirroring: usingScreen)
         }
         receiver.onAudioVolume = { [playback] volume in playback.setVolume(decibels: volume) }
         receiver.onAudioFlush = { [playback] in playback.flushAudio() }
+        // Media teardown must precede new packets, not wait behind main-thread UI events.
+        receiver.onMediaReset = { [pipeline, playback] in
+            pipeline.reset()
+            playback.reset()
+        }
         pipeline.onDimensions = { [weak self] width, height, isH265 in
             guard let self else { return }
             self.statusBar.setVideoSize(width: width, height: height, isH265: isH265)
@@ -78,6 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func stopMirroring() {
         guard clientConnected else { return }
         receiver.stop()
+        pipeline.reset()
+        playback.reset()
         clearMirroringState()
         startReceiver()
     }
@@ -88,8 +95,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.setClient(nil)
         windowController.dismiss()
         windowController.setDeviceName(nil)
-        pipeline.reset()
-        playback.reset()
     }
 
     private func setResolution(_ resolution: MirrorResolution) {
@@ -154,9 +159,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clearMirroringState()
         case .videoFlush:
             pipeline.flush()
-        case .connReset:
-            pipeline.reset()
-            playback.reset()
         default:
             break
         }

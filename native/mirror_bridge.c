@@ -34,6 +34,9 @@ static void cb_video_process(void *cls, raop_ntp_t *ntp, video_decode_struct *da
 static void cb_audio_process(void *cls, raop_ntp_t *ntp, audio_decode_struct *data) {
     (void)cls; (void)ntp;
     if (g_cbs.on_audio && data && data->data && data->data_len > 0) {
+        if (g_cbs.on_event) {
+            g_cbs.on_event(g_cbs.ctx, MB_EVENT_AUDIO_POSITION, (int32_t)data->rtp_time, NULL);
+        }
         g_cbs.on_audio(g_cbs.ctx, data->data, data->data_len,
                        data->ct, data->ntp_time_local);
     }

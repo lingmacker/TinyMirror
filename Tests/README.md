@@ -23,7 +23,9 @@ bash scripts/check-media.sh
 
 还单独验证“最后一包重传”和“首次同步”只从控制端口到达、之后没有普通数据包的情况：已齐备的声音必须立即按序放行，不得等下一包数据才能播放。这两项在旧循环分别只收到 1/3、0/2 包；修复保存在 `native/patches/uxplay-audio-control-drain.patch`。
 
-`AudioBridgeFormatChecks.c` 验证真实 C 回调保留 `usingScreen`；`ReceiverFormatChecks.swift` 通过无网络 C stub 验证实际 Swift 回调解析及旧版格式兼容，不启动发现服务。
+复用同一个 RTP 接收对象的停止／重连也必须等待新同步包，不能复用旧时钟。`RAOPConnectionLifecycleChecks.c` 验证生产连接清理路径在 join 媒体生产者、释放旧时钟后才通知断开，避免清理之后又有旧包回流。这些修复保存在 `native/patches/uxplay-audio-reconnect.patch`。
+
+`AudioBridgeFormatChecks.c` 验证真实 C 回调保留 `usingScreen`，并在每个音频回调之前发送完整 32 位 RTP 采样位置；`ReceiverFormatChecks.swift` 通过无网络 C stub 验证实际 Swift 回调解析、位置配对/回绕/清理和旧版 core 无位置时的兼容，不启动发现服务。C 音频回调 ABI 不变。
 
 ## Swift 播放层
 
@@ -40,10 +42,32 @@ bash scripts/check-media.sh
 - 模拟解码器重建耗时 120 毫秒：单独 ALAC 在 flush 和同格式重配后重新锚定首包，不能继续使用已过期的播放截止时刻；音视频模式的音频 flush 不停止或倒退视频时钟。
 - 每次检查再使用真实系统 decoder / output queue（静音）完成八次冷启动，注入 0 / 25 / 60 / 120 毫秒重建耗时，检查首包不晚到、有效包不丢失且 decoder 不失败。
 - 起播和结束处的有效 ALAC 静音均保留；零 PCM 时长准确，与纯音相接的时间戳连续、解码频谱干净。
+- `ALACSampleClockChecks.swift` 重现真实起播采样：连续 RTP，初始 NTP 为 0，突发到达，随后 NTP 完成校准并校正 43.5 毫秒。旧逻辑连续两包仅间隔约 0.198 毫秒，新逻辑按 352/44100 秒排程；验证真实缺帧保留时长、RTP 回绕、重复/倒退包拒绝、RTP 时钟随暂停停止后的短排程恢复、flush 后新锚点。该路径仅用于具有 RTP 元数据的单独 ALAC，镜像时钟不变。
 - 屏幕镜像仍使用原有低延迟策略；正常、缺省和异常大的时间戳提前量都不造成秒级等待。
 
-这些时长断言检查播放器调度，不是扬声器端到端实测。80 毫秒缓冲也不保证掩盖 250 毫秒的真实网络停顿；不再用秒级延迟换取这个保证。
+这些时长断言检查播放器调度，不是扬声器端到端实测。单独 ALAC 使用 120 毫秒排程余量，镜像仍为 80 毫秒；均不保证掩盖 250 毫秒的真实网络停顿，不用秒级延迟换取这个保证。
 - 音量、静音、无效音量输入、停止、同分辨率重连。
+
+## 真实 AudioQueue 输出连续性（需本机音频服务）
+
+```sh
+bash scripts/check-audio-replay.sh
+```
+
+该硬件集成检查不启动 App、发现服务或窗口，真实 decoder/output queue 始终静音。以批准采样的归一化到达约束 `Fixtures/ALACStartupArrivals.json` 重放约 20 秒音频，缺少观测的包间隔显式插值，不冒充完整抓包；声音由 Apple 编码器从本地纯音生成，不含用户媒体。连续执行三轮，输出在 `.build/audio-queue-replay/`。
+
+`AudioQueueReplayChecks.swift` 断言输入包齐全、PTS 连续、时钟确实运行。`CheckAudioQueueContinuity.py` 再检查系统 AudioQueue 实际输出的包序号与 PTS 是否少了采样，并检查时间线重同步；仅“入队成功”不算通过，日志不足返回未验证而不是通过。检查依赖 macOS 本机音频服务及系统日志可见性，因此不加入无音频设备的 CI。
+
+同一到达约束的单变量对照：80 毫秒多轮实际跳过约 40～43 包，100 毫秒仍跳过 3 包；120 毫秒三轮均零跳样／零重同步。减少 time-pitch 处理并未解决，反而更差，故保持系统默认算法，仅单独 ALAC 增加 40 毫秒排程余量。镜像策略、RTP 时间线和停止清理不变；输入暂停的排程队尾仍须小于 200 毫秒。这是本机重放结果，不是手机全网络条件下的听感保证。
+
+## 取消音频路由与重连
+
+`ReceiverLifecycleChecks.swift` 使用真实 Receiver → MediaPlayback 回调，C stub 不开网络、renderer 不输出声音：
+
+- 主线程忙碌时取消路由并快速重连，新格式和首包先完成，旧界面通知随后处理也不能清零新时钟。
+- 32 次断开／reset／重连，含单独音频与镜像模式切换；媒体清理先于界面通知执行。
+- 旧 renderer 就绪回调延迟到新连接后执行，也不能带回断开前的包。
+- receiver 停止再启动后，旧排队界面事件不能送入新会话。
 
 ## 窗口尺寸
 

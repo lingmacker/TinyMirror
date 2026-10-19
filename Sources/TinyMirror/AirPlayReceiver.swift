@@ -19,10 +19,11 @@ final class AirPlayReceiver {
 
     /// Receiver-thread callbacks: copy packet bytes before returning. Timestamps are local Unix nanoseconds.
     var onVideo: ((UnsafePointer<UInt8>, Int, Bool, UInt64) -> Void)?
-    var onAudio: ((UnsafePointer<UInt8>, Int, UInt8, UInt64) -> Void)?
+    var onAudio: ((UnsafePointer<UInt8>, Int, UInt8, UInt64, UInt32?) -> Void)?
     var onAudioFormat: ((UInt8, Int, Bool) -> Void)?
     var onAudioVolume: ((Float) -> Void)?
     var onAudioFlush: (() -> Void)?
+    var onMediaReset: (() -> Void)?
     /// Called on the main thread.
     var onEvent: ((ReceiverEvent) -> Void)?
     var onLog: ((Int, String) -> Void)?
@@ -31,6 +32,7 @@ final class AirPlayReceiver {
     private let eventLock = NSLock()
     private var eventGeneration = 0
     private var audioUsesScreen = true
+    private var audioRTPPosition: UInt32?
     private init() {}
 
     @discardableResult
@@ -46,7 +48,9 @@ final class AirPlayReceiver {
         cbs.on_audio = { ctx, data, len, compressionType, timestamp in
             guard let ctx, let data else { return }
             let receiver = Unmanaged<AirPlayReceiver>.fromOpaque(ctx).takeUnretainedValue()
-            receiver.onAudio?(data, Int(len), compressionType, timestamp)
+            let position = receiver.audioRTPPosition
+            receiver.audioRTPPosition = nil
+            receiver.onAudio?(data, Int(len), compressionType, timestamp, position)
         }
         cbs.on_event = { ctx, event, value, info in
             guard let ctx else { return }
@@ -56,13 +60,20 @@ final class AirPlayReceiver {
             switch mb_event_t(rawValue: UInt32(bitPattern: event)) {
             case MB_EVENT_AUDIO_MODE:
                 receiver.audioUsesScreen = value != 0
+            case MB_EVENT_AUDIO_POSITION:
+                receiver.audioRTPPosition = UInt32(bitPattern: value)
             case MB_EVENT_AUDIO_FORMAT:
+                receiver.audioRTPPosition = nil
                 guard let ct = UInt8(exactly: value) else { return }
                 receiver.onAudioFormat?(ct, infoString.flatMap(Int.init) ?? 0, receiver.audioUsesScreen)
             case MB_EVENT_AUDIO_VOLUME:
                 receiver.onAudioVolume?(Float(value) / 1000)
             case MB_EVENT_AUDIO_FLUSH:
                 receiver.onAudioFlush?()
+            case MB_EVENT_CONN_DESTROY, MB_EVENT_CONN_RESET:
+                receiver.audioRTPPosition = nil
+                receiver.onMediaReset?()
+                receiver.handleEvent(event, value: Int(value), info: infoString)
             default:
                 receiver.handleEvent(event, value: Int(value), info: infoString)
             }
@@ -86,6 +97,7 @@ final class AirPlayReceiver {
         eventLock.withLock { eventGeneration += 1 }
         isRunning = false
         audioUsesScreen = true
+        audioRTPPosition = nil
     }
 
     private func handleEvent(_ event: Int32, value: Int, info: String?) {

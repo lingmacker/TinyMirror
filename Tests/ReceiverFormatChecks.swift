@@ -30,6 +30,30 @@ private enum ReceiverFormatChecks {
         mb_test_event(event, 256, nil)
         precondition(received == nil)
         receiver.stop()
-        print("PASS native-to-Swift format delivery, standalone/screen flags, legacy core and invalid format handling; no network opened")
+        precondition(receiver.start(name: "No-network RTP position check"))
+        var position: UInt32?
+        var audioCount = 0
+        receiver.onAudio = { _, _, _, _, value in position = value; audioCount += 1 }
+        let positionEvent = Int32(MB_EVENT_AUDIO_POSITION.rawValue)
+        let bytes: [UInt8] = [0]
+        func audio() { bytes.withUnsafeBufferPointer { mb_test_audio($0.baseAddress!, 1, 2, 0) } }
+        for value: UInt32 in [0, .max, 0x80000000, 352] {
+            mb_test_event(positionEvent, Int32(bitPattern: value), nil)
+            audio()
+            precondition(position == value)
+            audio()
+            precondition(position == nil, "Legacy packet reused previous RTP position")
+        }
+        mb_test_event(positionEvent, 123, nil)
+        "352".withCString { mb_test_event(event, 2, $0) }
+        audio()
+        precondition(position == nil)
+        mb_test_event(positionEvent, 123, nil)
+        receiver.stop()
+        precondition(receiver.start(name: "No-network RTP position restart"))
+        audio()
+        precondition(position == nil && audioCount == 10)
+        receiver.stop()
+        print("PASS native-to-Swift format/mode, paired/wrapped RTP positions, legacy core and cleanup; no network opened")
     }
 }

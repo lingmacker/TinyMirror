@@ -27,6 +27,11 @@ xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/mo
     -o .build/audio-tests/check-media
 .build/audio-tests/check-media
 xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/module-cache \
+    Sources/TinyMirror/AirPlayAudioFormat.swift Sources/TinyMirror/MediaPlayback.swift \
+    Sources/TinyMirror/VideoPipeline.swift Tests/ALACSampleClockChecks.swift \
+    -framework AVFoundation -framework AudioToolbox -o .build/audio-tests/check-alac-sample-clock
+.build/audio-tests/check-alac-sample-clock
+xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/module-cache \
     Sources/TinyMirror/MirrorVideoView.swift \
     Sources/TinyMirror/MirrorWindowController.swift \
     Sources/TinyMirror/Localization.swift \
@@ -44,4 +49,12 @@ xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/mo
     Sources/TinyMirror/Localization.swift Tests/ReceiverFormatChecks.swift \
     .build/audio-tests/receiver-stub.o -o .build/audio-tests/check-receiver-format
 .build/audio-tests/check-receiver-format
+xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/module-cache \
+    -I .build/audio-tests/CMirrorBridge -import-objc-header Tests/ReceiverBridgeStub.h \
+    Sources/TinyMirror/AirPlayReceiver.swift Sources/TinyMirror/Settings.swift \
+    Sources/TinyMirror/Localization.swift Sources/TinyMirror/AirPlayAudioFormat.swift \
+    Sources/TinyMirror/MediaPlayback.swift Sources/TinyMirror/VideoPipeline.swift \
+    Tests/ReceiverLifecycleChecks.swift .build/audio-tests/receiver-stub.o \
+    -framework AVFoundation -framework AudioToolbox -o .build/audio-tests/check-receiver-lifecycle
+.build/audio-tests/check-receiver-lifecycle
 cmp native/include/mirror_bridge.h Sources/CMirrorBridge/include/mirror_bridge.h

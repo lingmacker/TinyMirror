@@ -46,6 +46,18 @@ static void send_packet(int fd, unsigned short port, unsigned short seq, uint32_
     int length = offset + 12 + payload_length;
     assert(sendto(fd, bytes, length, 0, (struct sockaddr *)&destination, sizeof(destination)) == length);
 }
+static void send_sync(int fd, unsigned short port, uint32_t next_rtp) {
+    unsigned char sync[20] = {0x90, 0xd4, 0, 4};
+    uint32_t anchor = htonl(next_rtp - 77175U), next = htonl(next_rtp);
+    memcpy(sync + 4, &anchor, sizeof(anchor));
+    byteutils_put_ntp_timestamp(sync, 8, raop_ntp_get_local_time());
+    memcpy(sync + 16, &next, sizeof(next));
+    struct sockaddr_in destination = {0};
+    destination.sin_family = AF_INET;
+    destination.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    destination.sin_port = htons(port);
+    assert(sendto(fd, sync, sizeof(sync), 0, (struct sockaddr *)&destination, sizeof(destination)) == sizeof(sync));
+}
 static void wait_for(struct capture *capture, unsigned int wanted) {
     for (int i = 0; i < 200 && atomic_load_explicit(&capture->count, memory_order_acquire) < wanted; i++) usleep(1000);
 }
@@ -98,16 +110,7 @@ int main(void) {
             } else {
                 send_packet(sender, data_port, 101, 10352, 1, 0);
                 usleep(10000);
-                unsigned char sync[20] = {0x90, 0xd4, 0, 4};
-                uint32_t sync_rtp = htonl(10000U - 77175U), next_rtp = htonl(10000U);
-                memcpy(sync + 4, &sync_rtp, sizeof(sync_rtp));
-                byteutils_put_ntp_timestamp(sync, 8, raop_ntp_get_local_time());
-                memcpy(sync + 16, &next_rtp, sizeof(next_rtp));
-                struct sockaddr_in destination = {0};
-                destination.sin_family = AF_INET;
-                destination.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-                destination.sin_port = htons(control_port);
-                assert(sendto(sender, sync, sizeof(sync), 0, (struct sockaddr *)&destination, sizeof(destination)) == sizeof(sync));
+                send_sync(sender, control_port, 10000);
             }
             unsigned int expected = scenario == 2 ? 3 : 2;
             wait_for(&capture, expected);
@@ -144,6 +147,22 @@ int main(void) {
             failed = 1;
         } else {
             printf("PASS ALAC %s valid silence survives UDP, AES, startup/resume and RTP wraparound\n", resent ? "retransmitted" : "direct");
+        }
+        if (scenario == 0) {
+            control_port = data_port = 0;
+            raop_rtp_start_audio(rtp, &remote_port, &control_port, &data_port, &ct, &sr);
+            assert(raop_rtp_is_running(rtp));
+            send_packet(sender, data_port, 200, 2000000, 1, 0);
+            usleep(30000);
+            if (atomic_load_explicit(&capture.count, memory_order_acquire) != 4) {
+                fprintf(stderr, "FAIL restarted ALAC used its previous connection's clock before a new sync\n");
+                failed = 1;
+            }
+            send_sync(sender, control_port, 2000000);
+            wait_for(&capture, 5);
+            raop_rtp_stop(rtp);
+            assert(atomic_load_explicit(&capture.count, memory_order_acquire) == 5 && capture.seq[4] == 200);
+            if (!failed) puts("PASS restarted ALAC waits for a fresh sync on the reused RTP receiver");
         }
         raop_rtp_destroy(rtp);
         raop_ntp_destroy(ntp);

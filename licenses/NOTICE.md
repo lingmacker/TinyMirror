@@ -48,6 +48,8 @@ SHA-256-verified dependency releases pinned in `scripts/build-deps.sh`:
   `native/patches/uxplay-audio-control-drain.patch` releases playable buffered
   audio after an initial clock sync or retransmission on the control socket,
   without requiring another ordinary audio datagram.
+  `native/patches/uxplay-audio-reconnect.patch` clears stale RTP sync state on
+  stream stop and joins media producers before notifying connection teardown.
 - libplist: https://github.com/libimobiledevice/libplist
 - OpenSSL: https://github.com/openssl/openssl
 

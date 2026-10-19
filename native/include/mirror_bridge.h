@@ -26,7 +26,8 @@ typedef enum {
     MB_EVENT_AUDIO_FORMAT = 10, /* value = ct; info = samples per frame (decimal) */
     MB_EVENT_MIRROR_RUNNING = 11, /* value = 0/1 */
     MB_EVENT_AUDIO_VOLUME = 12, /* value = client volume in milli-decibels (-144000...0) */
-    MB_EVENT_AUDIO_MODE = 13    /* value = usingScreen (0 standalone / 1 mirroring), before AUDIO_FORMAT */
+    MB_EVENT_AUDIO_MODE = 13,   /* value = usingScreen (0 standalone / 1 mirroring), before AUDIO_FORMAT */
+    MB_EVENT_AUDIO_POSITION = 14 /* value bits = uint32 RTP sample position, immediately before on_audio */
 } mb_event_t;
 
 /* Annex-B H.264/H.265 frame data (may contain several NAL units). */

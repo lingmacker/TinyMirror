@@ -31,3 +31,11 @@ xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
     .build/deps/macos26/lib/libplist-2.0.a .build/deps/macos26/lib/libcrypto.a \
     -lpthread -o .build/audio-tests/check-audio-bridge
 .build/audio-tests/check-audio-bridge
+xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
+    -DPLIST_210 -DPLIST_230 -I vendor/UxPlay/lib -I .build/deps/macos26/include \
+    Tests/RAOPConnectionLifecycleChecks.c \
+    "$TEST_CORE/airplay/libairplay.a" "$TEST_CORE/playfair/libplayfair.a" \
+    "$TEST_CORE/dns_sd/libdnssd.a" "$TEST_CORE/llhttp/libllhttp.a" \
+    .build/deps/macos26/lib/libplist-2.0.a .build/deps/macos26/lib/libcrypto.a \
+    -lpthread -o .build/audio-tests/check-connection-lifecycle
+.build/audio-tests/check-connection-lifecycle

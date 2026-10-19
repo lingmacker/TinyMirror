@@ -436,7 +436,7 @@ private enum MediaPlaybackChecks {
             let time = UInt64(Date().timeIntervalSince1970 * 1_000_000_000) + 1_750_000_000
             transportedSilence.withUnsafeBytes {
                 player.handleAudio($0.bindMemory(to: UInt8.self).baseAddress!, transportedSilence.count,
-                                   compressionType: 2, timestamp: time)
+                                   compressionType: 2, timestamp: time, rtpTimestamp: UInt32.max - 500)
             }
             waitFor { actual.receivedCount == 1 }
             actual.stallNextFlush([0.0, 0.025, 0.06, 0.12][iteration % 4])
@@ -445,7 +445,9 @@ private enum MediaPlaybackChecks {
                 let packet = standalonePackets[index]
                 packet.withUnsafeBytes {
                     player.handleAudio($0.bindMemory(to: UInt8.self).baseAddress!, packet.count,
-                                       compressionType: 2, timestamp: time + UInt64(index + 1) * 352 * 1_000_000_000 / 44_100)
+                                       compressionType: 2,
+                                       timestamp: iteration % 2 == 0 ? 0 : time + UInt64(index + 1) * 352 * 1_000_000_000 / 44_100 + (index >= 8 ? 43_500_250 : 0),
+                                       rtpTimestamp: (UInt32.max - 500) &+ UInt32((index + 1) * 352))
                 }
             }
             waitFor { actual.receivedCount == 17 }

@@ -1,0 +1,44 @@
+diff --git a/lib/raop.c b/lib/raop.c
+--- a/lib/raop.c
++++ b/lib/raop.c
+@@ -551,10 +551,6 @@
+     raop_t *raop = conn->raop;
+     logger_log(raop->logger, LOGGER_DEBUG, "Destroying connection");
+ 
+-    if (raop->callbacks.conn_destroy) {
+-        raop->callbacks.conn_destroy(raop->callbacks.cls);
+-    }
+-
+     if (conn->raop_rtp) {
+         /* This is done in case TEARDOWN was not called */
+         raop_rtp_destroy(conn->raop_rtp);
+@@ -565,6 +561,11 @@
+     }
+     if (conn->raop_ntp) {
+         raop_ntp_destroy(conn->raop_ntp);
++    }
++
++    /* Notify only after old media producers have joined, so none can refill a reset player. */
++    if (raop->callbacks.conn_destroy) {
++        raop->callbacks.conn_destroy(raop->callbacks.cls);
+     }
+ 
+     if (raop->callbacks.video_flush) {
+diff --git a/lib/raop_rtp.c b/lib/raop_rtp.c
+--- a/lib/raop_rtp.c
++++ b/lib/raop_rtp.c
+@@ -811,8 +811,12 @@
+     /* Flush buffer into initial state */
+     raop_buffer_flush(raop_rtp->buffer, -1);
+ 
+-    /* Mark thread as joined */
+-    MUTEX_LOCK(raop_rtp->run_mutex);
++    /* A restarted stream must wait for its own sync, not reuse the previous RTP clock. */
++    MUTEX_LOCK(raop_rtp->run_mutex);
++    raop_rtp->initial_sync = false;
++    raop_rtp->rtp_sync = 0;
++    raop_rtp->client_ntp_sync = 0;
++    raop_rtp->flush = NO_FLUSH;
+     raop_rtp->joined = 1;
+     MUTEX_UNLOCK(raop_rtp->run_mutex);
+ }

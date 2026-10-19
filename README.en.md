@@ -100,7 +100,7 @@ and compression quality remain controlled by iOS.
 Mirrored audio plays through the Mac's current default speakers, headphones, or other system output; no microphone permission is needed.
 The app uses native decoding for stereo 44.1 kHz AAC-ELD, AAC-LC, ALAC, and 16-bit PCM, with a shared audio/video playback clock.
 Adjust playback volume on the iPhone and system output volume on the Mac. Stopping, disconnecting, or quitting clears queued audio.
-Standalone ALAC uses a short jitter buffer without adding seconds of playout delay. Valid compressed silence at startup, stop, or retransmission is decoded rather than discarded by packet length; the screen-mirroring latency policy is unchanged.
+Standalone ALAC uses a 120 ms scheduling buffer (screen mirroring remains at 80 ms), without adding seconds of playout delay. Valid compressed silence at startup, stop, or retransmission is decoded rather than discarded by packet length; the screen-mirroring latency policy is unchanged.
 
 TinyMirror plays the audio your phone continues to send; AirPlay does not report which phone app is in the foreground. If an app keeps playing after being backgrounded, pause it on the phone, check its background/picture-in-picture playback settings, or stop mirroring.
 

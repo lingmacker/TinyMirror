@@ -19,6 +19,7 @@ final class MediaPlayback {
     private var pendingAudio: [CMSampleBuffer] = []
     private var requestingAudio = false
     private var nextAudioTime: CMTime?
+    private var audioRTPAnchor: (position: UInt32, time: CMTime, arrival: UInt64)?
     private var lastVideoTime: CMTime?
     private var screenMirroring = true
     private var standaloneALAC: Bool { audioType == 2 && !screenMirroring }
@@ -48,6 +49,7 @@ final class MediaPlayback {
         if standaloneALAC || wasStandaloneALAC != standaloneALAC { clockStarted = false }
         audioFormat = AirPlayAudioFormat(compressionType: compressionType, samplesPerFrame: samplesPerFrame)
         nextAudioTime = nil
+        audioRTPAnchor = nil
         audioErrorReported = false
         if audioFormat == nil {
             NSLog("[TinyMirror] unsupported audio format: ct=%d spf=%d", compressionType, samplesPerFrame)
@@ -57,7 +59,9 @@ final class MediaPlayback {
     }
 
     /// Copies receiver-owned bytes before returning; bounds queued audio during CPU stalls.
-    func handleAudio(_ bytes: UnsafePointer<UInt8>, _ length: Int, compressionType: UInt8, timestamp: UInt64) {
+    func handleAudio(_ bytes: UnsafePointer<UInt8>, _ length: Int, compressionType: UInt8, timestamp: UInt64,
+                     rtpTimestamp: UInt32? = nil) {
+        let arrival = DispatchTime.now().uptimeNanoseconds
         guard length > 0, length <= 65_536, audioSlots.wait(timeout: .now()) == .success else { return }
         let generation = generationLock.withLock { self.generation }
         let packet = Data(bytes: bytes, count: length)
@@ -69,7 +73,7 @@ final class MediaPlayback {
                 self.configureAudioOnQueue(compressionType: compressionType, samplesPerFrame: 0,
                                            screenMirroring: self.screenMirroring)
             }
-            guard let format = self.audioFormat, let pts = self.presentationTime(timestamp, isAudio: true),
+            guard let format = self.audioFormat, let pts = self.presentationTime(timestamp, isAudio: true, rtpTimestamp: rtpTimestamp, audioArrival: arrival),
                   let sample = format.sampleBuffer(packet, presentationTime: pts) else { return }
             if self.audioRenderer.status == .failed {
                 if !self.audioErrorReported {
@@ -79,6 +83,7 @@ final class MediaPlayback {
                 self.clearPendingAudio()
                 self.audioRenderer.flush()
             }
+            if self.standaloneALAC, let position = rtpTimestamp { self.audioRTPAnchor = (position, pts, arrival) }
             self.pendingAudio.append(sample)
             self.nextAudioTime = pts + CMSampleBufferGetDuration(sample)
             queued = true
@@ -129,8 +134,18 @@ final class MediaPlayback {
         }
     }
 
-    private func presentationTime(_ timestamp: UInt64, isAudio: Bool = false) -> CMTime? {
+    private func presentationTime(_ timestamp: UInt64, isAudio: Bool = false, rtpTimestamp: UInt32? = nil,
+                                  audioArrival: UInt64? = nil) -> CMTime? {
         guard timestamp <= UInt64(Int64.max) else { return nil }
+        if isAudio, standaloneALAC, let position = rtpTimestamp, let arrival = audioArrival, let anchor = audioRTPAnchor {
+            let samples = Int32(bitPattern: position &- anchor.position)
+            guard samples > 0 else { return nil }
+            // RTP samples stay continuous when NTP is unavailable or recalibrated; arrival time does not.
+            let projected = anchor.time + CMTime(value: Int64(samples), timescale: 44_100)
+            if arrival - anchor.arrival < 250_000_000 || projected >= synchronizer.currentTime() { return projected }
+            // A sender may pause its RTP clock along with packet delivery.
+            clockStarted = false
+        }
         let pts = timestamp == 0
             ? CMTime(seconds: Date().timeIntervalSince1970, preferredTimescale: 1_000_000_000)
             : CMTime(value: Int64(timestamp), timescale: 1_000_000_000)
@@ -149,8 +164,9 @@ final class MediaPlayback {
                 audioRenderer.flush()
                 videoRenderer.flush()
             }
-            // shortcut: fixed 80 ms jitter buffer; revisit after real-device latency/underrun measurements.
-            let start = CMClockGetTime(CMClockGetHostTimeClock()) + CMTime(value: 80, timescale: 1000)
+            // shortcut: ALAC covers measured ~100 ms bursts; revisit if real jitter exceeds the 120 ms budget.
+            let jitter: Int64 = standaloneALAC ? 120 : 80
+            let start = CMClockGetTime(CMClockGetHostTimeClock()) + CMTime(value: jitter, timescale: 1000)
             synchronizer.setRate(1, time: pts, atHostTime: start)
             clockStarted = true
         }
@@ -168,6 +184,7 @@ final class MediaPlayback {
             guard let self else { return }
             self.clearPendingAudio()
             self.nextAudioTime = nil
+            self.audioRTPAnchor = nil
             self.audioRenderer.flush()
             if self.standaloneALAC { self.clockStarted = false }
         }
@@ -191,6 +208,7 @@ final class MediaPlayback {
             audioType = nil
             screenMirroring = true
             nextAudioTime = nil
+            audioRTPAnchor = nil
             lastVideoTime = nil
             clockStarted = false
             audioErrorReported = false

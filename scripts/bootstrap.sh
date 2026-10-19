@@ -34,7 +34,8 @@ fetch vendor/UxPlay "$UXPLAY_REPO" "$UXPLAY_COMMIT"
 for AUDIO_PATCH in "$PWD/native/patches/uxplay-audio-silence.patch" \
                    "$PWD/native/patches/uxplay-audio-clock.patch" \
                    "$PWD/native/patches/uxplay-alac-pause.patch" \
-                   "$PWD/native/patches/uxplay-audio-control-drain.patch"; do
+                   "$PWD/native/patches/uxplay-audio-control-drain.patch" \
+                   "$PWD/native/patches/uxplay-audio-reconnect.patch"; do
     # The silence hunk omits trailing context changed by the ALAC patch.
     if git -C vendor/UxPlay apply --unidiff-zero --reverse --check "$AUDIO_PATCH" 2>/dev/null; then
         echo "==> $(basename "$AUDIO_PATCH") already applied"
