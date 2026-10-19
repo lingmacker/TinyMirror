@@ -60,6 +60,11 @@ int mb_start(const char *name, const mb_callbacks_t *cbs, int debug_log);
 int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug_log,
                    int width, int height, int enable_hevc);
 
+/* Start with a requested maximum frame rate (30 or 60 FPS).
+ * The client chooses the actual frame rate. Older start functions request 30 FPS. */
+int mb_start_video_with_fps(const char *name, const mb_callbacks_t *cbs, int debug_log,
+                           int width, int height, int enable_hevc, int max_fps);
+
 /* Stop the receiver and unregister the Bonjour services. */
 void mb_stop(void);
 

@@ -36,7 +36,7 @@ final class AirPlayReceiver {
     private init() {}
 
     @discardableResult
-    func start(name: String, resolution: MirrorResolution = .quadHD, debug: Bool = false) -> Bool {
+    func start(name: String, resolution: MirrorResolution = .quadHD, frameRate: MirrorFrameRate = .standard, debug: Bool = false) -> Bool {
         guard !isRunning else { return true }
         var cbs = mb_callbacks_t()
         cbs.ctx = Unmanaged.passUnretained(self).toOpaque()
@@ -83,8 +83,9 @@ final class AirPlayReceiver {
             let receiver = Unmanaged<AirPlayReceiver>.fromOpaque(ctx).takeUnretainedValue()
             receiver.onLog?(Int(level), String(cString: msg))
         }
-        let result = mb_start_video(name, &cbs, debug ? 1 : 0,
-                                    Int32(resolution.width), Int32(resolution.rawValue), resolution.usesHEVC ? 1 : 0)
+        let result = mb_start_video_with_fps(name, &cbs, debug ? 1 : 0,
+                                             Int32(resolution.width), Int32(resolution.rawValue),
+                                             resolution.usesHEVC ? 1 : 0, Int32(frameRate.rawValue))
         isRunning = result == 0
         if !isRunning { eventLock.withLock { eventGeneration += 1 } }
         return isRunning

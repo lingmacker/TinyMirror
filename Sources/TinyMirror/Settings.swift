@@ -15,6 +15,12 @@ enum MirrorResolution: Int, CaseIterable {
     }
 }
 
+enum MirrorFrameRate: Int, CaseIterable {
+    case standard = 30, smooth = 60
+
+    var title: String { "\(rawValue) FPS" }
+}
+
 enum Settings {
     private static let defaults = UserDefaults.standard
 
@@ -31,6 +37,11 @@ enum Settings {
     static var resolution: MirrorResolution {
         get { MirrorResolution(rawValue: defaults.integer(forKey: "resolution")) ?? .quadHD }
         set { defaults.set(newValue.rawValue, forKey: "resolution") }
+    }
+
+    static var frameRate: MirrorFrameRate {
+        get { MirrorFrameRate(rawValue: defaults.integer(forKey: "frameRate")) ?? .standard }
+        set { defaults.set(newValue.rawValue, forKey: "frameRate") }
     }
 
     /// Whether the mirror window floats above other applications.

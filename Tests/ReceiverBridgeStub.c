@@ -3,11 +3,19 @@
 #include <string.h>
 
 static mb_callbacks_t callbacks;
-int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug, int width, int height, int hevc) {
+static int frame_rate, start_count;
+int mb_start_video_with_fps(const char *name, const mb_callbacks_t *cbs, int debug, int width, int height, int hevc, int fps) {
     (void) name; (void) debug; (void) width; (void) height; (void) hevc;
     callbacks = *cbs;
+    frame_rate = fps;
+    start_count++;
     return 0;
 }
+int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug, int width, int height, int hevc) {
+    return mb_start_video_with_fps(name, cbs, debug, width, height, hevc, 30);
+}
+int mb_test_frame_rate(void) { return frame_rate; }
+int mb_test_start_count(void) { return start_count; }
 int mb_start(const char *name, const mb_callbacks_t *cbs, int debug) {
     return mb_start_video(name, cbs, debug, 1920, 1080, 0);
 }

@@ -127,10 +127,16 @@ int mb_start(const char *name, const mb_callbacks_t *cbs, int debug_log) {
 
 int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug_log,
                    int width, int height, int enable_hevc) {
+    return mb_start_video_with_fps(name, cbs, debug_log, width, height, enable_hevc, 30);
+}
+
+int mb_start_video_with_fps(const char *name, const mb_callbacks_t *cbs, int debug_log,
+                           int width, int height, int enable_hevc, int max_fps) {
     if (g_raop || g_dnssd) return -1;
     if (!name || !cbs || !cbs->on_video || !cbs->on_audio ||
         width < 1 || width > 9999 || height < 1 || height > 9999 ||
-        (enable_hevc != 0 && enable_hevc != 1)) return -2;
+        (enable_hevc != 0 && enable_hevc != 1) ||
+        (max_fps != 30 && max_fps != 60)) return -2;
     memcpy(&g_cbs, cbs, sizeof(g_cbs));
 
     ntp_global_init();
@@ -230,7 +236,8 @@ int mb_start_video(const char *name, const mb_callbacks_t *cbs, int debug_log,
         return -5;
     }
 
-    if (raop_set_plist(g_raop, "width", width) || raop_set_plist(g_raop, "height", height)) {
+    if (raop_set_plist(g_raop, "width", width) || raop_set_plist(g_raop, "height", height) ||
+        raop_set_plist(g_raop, "maxFPS", max_fps)) {
         mb_stop();
         return -7;
     }

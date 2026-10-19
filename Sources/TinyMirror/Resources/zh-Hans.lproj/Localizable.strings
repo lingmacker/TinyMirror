@@ -3,7 +3,7 @@
 "Show Mirror Window" = "显示投屏窗口";
 "Stop Mirroring" = "关闭投屏";
 "Keep Window on Top" = "窗口置顶";
-"Quit TinyMirror" = "退出 TinyMirror";
+"Quit" = "退出";
 "Visible as “%@”" = "投屏接收名称：“%@”";
 "Receiver failed to start" = "投屏接收服务启动失败";
 "Mirroring: %@" = "正在投屏：%@";
@@ -23,5 +23,6 @@
 "2K (1440p) — HEVC" = "2K（1440p）— HEVC";
 "4K — HEVC" = "4K — HEVC";
 "Resolution" = "投屏分辨率";
+"Frame Rate" = "投屏帧率";
 "Stop mirroring to change; reconnect to apply." = "停止投屏后可切换，重新投屏生效。";
 "Actual stream: %d × %d (%@)" = "实际码流：%d × %d（%@）";

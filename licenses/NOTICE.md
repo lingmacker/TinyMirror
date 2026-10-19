@@ -4,8 +4,8 @@ TinyMirror's AirPlay receiver is built from third-party open-source code. All of
 it is isolated in a single shared library, **`libMirrorCore.dylib`**, shipped at
 `TinyMirror.app/Contents/Frameworks/libMirrorCore.dylib`. The application binary
 contains none of it and talks to the library only through the C interface in
-`native/include/mirror_bridge.h` (`mb_start_video`, compatible `mb_start`, and
-`mb_stop` — the only symbols the library exports).
+`native/include/mirror_bridge.h` (`mb_start_video_with_fps`, compatible
+`mb_start_video` / `mb_start`, and `mb_stop` — the only symbols the library exports).
 
 | Component | Origin | License |
 |---|---|---|

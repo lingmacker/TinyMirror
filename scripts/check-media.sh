@@ -57,4 +57,16 @@ xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/mo
     Tests/ReceiverLifecycleChecks.swift .build/audio-tests/receiver-stub.o \
     -framework AVFoundation -framework AudioToolbox -o .build/audio-tests/check-receiver-lifecycle
 .build/audio-tests/check-receiver-lifecycle
+mkdir -p .build/frame-rate-tests/home
+xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/module-cache \
+    -I .build/audio-tests/CMirrorBridge -import-objc-header Tests/ReceiverBridgeStub.h \
+    Sources/TinyMirror/AirPlayReceiver.swift Sources/TinyMirror/Settings.swift \
+    Sources/TinyMirror/Localization.swift Sources/TinyMirror/AirPlayAudioFormat.swift \
+    Sources/TinyMirror/MediaPlayback.swift Sources/TinyMirror/VideoPipeline.swift \
+    Sources/TinyMirror/MirrorVideoView.swift Sources/TinyMirror/MirrorWindowController.swift \
+    Sources/TinyMirror/StatusBarController.swift Sources/TinyMirror/AppDelegate.swift \
+    Tests/FrameRateMenuChecks.swift .build/audio-tests/receiver-stub.o \
+    -framework AppKit -framework AVFoundation -framework AudioToolbox \
+    -o .build/frame-rate-tests/check-menu
+CFFIXED_USER_HOME="$PWD/.build/frame-rate-tests/home" .build/frame-rate-tests/check-menu
 cmp native/include/mirror_bridge.h Sources/CMirrorBridge/include/mirror_bridge.h

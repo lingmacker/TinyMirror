@@ -16,9 +16,8 @@ run: build
 	fi
 	open "dist/TinyMirror.app"
 
-install:
-	$(MAKE) build CONFIGURATION=debug
-	./scripts/install-app.sh "$(INSTALL_DIR)"
+install: build
+	cp -Rf "dist/TinyMirror.app" "$(INSTALL_DIR)/"
 
 clean:
 	rm -rf .build dist native/build

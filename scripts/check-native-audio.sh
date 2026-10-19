@@ -39,3 +39,10 @@ xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
     .build/deps/macos26/lib/libplist-2.0.a .build/deps/macos26/lib/libcrypto.a \
     -lpthread -o .build/audio-tests/check-connection-lifecycle
 .build/audio-tests/check-connection-lifecycle
+xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
+    -I vendor/UxPlay/lib -I native/include Tests/VideoConfigurationChecks.c \
+    "$TEST_CORE/airplay/libairplay.a" "$TEST_CORE/playfair/libplayfair.a" \
+    "$TEST_CORE/dns_sd/libdnssd.a" "$TEST_CORE/llhttp/libllhttp.a" \
+    .build/deps/macos26/lib/libplist-2.0.a .build/deps/macos26/lib/libcrypto.a \
+    -lpthread -o .build/audio-tests/check-video-configuration
+.build/audio-tests/check-video-configuration

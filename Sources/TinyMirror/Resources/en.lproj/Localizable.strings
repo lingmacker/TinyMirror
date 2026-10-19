@@ -3,7 +3,7 @@
 "Show Mirror Window" = "Show Mirror Window";
 "Stop Mirroring" = "Stop Mirroring";
 "Keep Window on Top" = "Keep Window on Top";
-"Quit TinyMirror" = "Quit TinyMirror";
+"Quit" = "Quit";
 "Visible as “%@”" = "Visible as “%@”";
 "Receiver failed to start" = "Receiver failed to start";
 "Mirroring: %@" = "Mirroring: %@";
@@ -23,5 +23,6 @@
 "2K (1440p) — HEVC" = "2K (1440p) — HEVC";
 "4K — HEVC" = "4K — HEVC";
 "Resolution" = "Resolution";
+"Frame Rate" = "Frame Rate";
 "Stop mirroring to change; reconnect to apply." = "Stop mirroring to change; reconnect to apply.";
 "Actual stream: %d × %d (%@)" = "Actual stream: %d × %d (%@)";

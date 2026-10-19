@@ -6,6 +6,14 @@ bash scripts/check-media.sh
 
 需要完整 Xcode 和项目正常构建所需的工具。脚本在 `.build/native-audio-tests/` 隔离构建固定版本的 native core，不覆盖运行中开发应用可能加载的 `native/build/` 库，再由 macOS 的 `afconvert` 生成三秒双声道纯音。播放检查使用静音 renderer，不录制用户音频，不启动应用窗口。
 
+## 投屏帧率菜单
+
+`VideoConfigurationChecks.c` 调用真实启动与配置流程，仅替换 HTTP 监听及 Bonjour 发布，验证 30/60 FPS 在发布前写入 native `maxFPS`、非法值拒绝、旧启动 API 默认 30 FPS，以及配置失败后的清理；不打开网络监听。
+
+`FrameRateMenuChecks.swift` 使用真实菜单、AppDelegate 和 Receiver 配合无网络 C stub，在 `.build/frame-rate-tests/home` 隔离偏好设置。验证默认值、非法保存值回退、保存与勾选、30/60 FPS 参数传递、相同值不重复重启、接收器停止后的恢复，以及连接中禁用帧率和分辨率、断开后恢复。测试不显示投屏窗口；菜单栏状态项会短暂创建，不影响实际应用设置。
+
+这些检查验证的是请求的帧率上限，不保证 iPhone 实际发送 60 FPS。
+
 ## 原生接收层
 
 `RAOPAudioBufferChecks.c` 测试实际 UxPlay 重排缓冲，并启用 AddressSanitizer / UndefinedBehaviorSanitizer：

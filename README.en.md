@@ -95,6 +95,13 @@ a portrait phone may send about 498×1080 for the 1080p preset, rather than a
 a higher preset can help only if the phone actually sends more pixels. Bitrate
 and compression quality remain controlled by iOS.
 
+### Frame rate
+
+Choose **Frame Rate** in the menu bar: **30 FPS** (default) or **60 FPS**. The choice is saved.
+Stop mirroring before changing it, then reconnect from the iPhone. This requests a maximum frame rate,
+not a fixed rate; the actual rate depends on the iPhone, screen content, and network.
+60 FPS needs more bandwidth and decoding resources.
+
 ## Audio
 
 Mirrored audio plays through the Mac's current default speakers, headphones, or other system output; no microphone permission is needed.
@@ -165,10 +172,10 @@ make clean    # remove build products, dist/, and native/build/
 
 Run `bash scripts/check-media.sh` for muted regressions covering native RTP silence markers, retransmission, sequence wraparound, 256-packet bursts, system decoding, stereo tone fidelity, video display, volume, cleanup, and stable window geometry. Fixtures are generated locally; user audio is not recorded. See [Tests/README.md](Tests/README.md).
 
-`make` defaults to `build`. Installation always builds Debug for temporary local
-use; there is no Release install option. Use
+`make` defaults to `build`. Installation reuses `build` and defaults to Debug;
+use `CONFIGURATION=release` for Release. Use
 `make install INSTALL_DIR="$HOME/Applications"` to choose a different
-installation directory. Quit a running TinyMirror before `run` or `install`; these
+existing installation directory. Quit a running TinyMirror before `run` or `install`; these
 targets do not terminate an active mirroring session for you, and installation does
 not use `sudo` automatically.
 
@@ -176,9 +183,9 @@ Every build assembles the executable, replaceable native library, localizations,
 permission metadata, icon and licenses into `dist/TinyMirror.app`. Local bundles
 are ad-hoc signed, as are the app and disk image made by the packaging script.
 No Apple account, signing certificate, keychain identity lookup or notarization
-service is used. Installation stages and verifies the new app before replacing an
-existing copy, restores the previous copy if replacement fails, and leaves user
-preferences untouched.
+service is used. Installation uses `cp -Rf` to force-copy over the existing app,
+without rollback or removal of files unique to the old version. User preferences
+are left untouched.
 
 `make clean` removes `.build/`, `dist/`, and `native/build/`, including local dependencies,
 dependency source checkouts, SwiftPM configuration, and the native CMake cache. The next
@@ -216,7 +223,7 @@ iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP)──▶ libMirrorCo
 ```
 
 - **`native/`** — `mirror_bridge.c` wraps the vendored AirPlay protocol core
-  behind a small C API (`mb_start_video`, compatible `mb_start`, and `mb_stop`), built as
+  behind a small C API (`mb_start_video_with_fps`, compatible `mb_start_video` / `mb_start`, and `mb_stop`), built as
   `libMirrorCore.dylib` by `make build` (via `native/build.sh`). All third-party code lives here and nowhere else.
 - **`Sources/TinyMirror/`** — menu bar shell, native mirror window, `VideoPipeline` video packaging,
   `AirPlayAudioFormat` audio packaging, and `MediaPlayback` with a shared `AVSampleBufferRenderSynchronizer` clock. Both streams use system decoding.

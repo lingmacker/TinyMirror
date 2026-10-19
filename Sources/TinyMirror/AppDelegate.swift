@@ -70,7 +70,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.setAlwaysOnTop(on)
         }
         statusBar.onResolutionChange = { [weak self] resolution in self?.setResolution(resolution) }
+        statusBar.onFrameRateChange = { [weak self] frameRate in self?.setFrameRate(frameRate) }
         statusBar.setResolution(Settings.resolution)
+        statusBar.setFrameRate(Settings.frameRate)
         setAlwaysOnTop(Settings.alwaysOnTop)
     }
 
@@ -91,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func clearMirroringState() {
         clientConnected = false
-        statusBar.setResolutionEnabled(true)
+        statusBar.setVideoSettingsEnabled(true)
         statusBar.setClient(nil)
         windowController.dismiss()
         windowController.setDeviceName(nil)
@@ -108,11 +110,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         startReceiver()
     }
 
+    private func setFrameRate(_ frameRate: MirrorFrameRate) {
+        guard !clientConnected else { return }
+        guard frameRate != Settings.frameRate || !receiver.isRunning else { return }
+        Settings.frameRate = frameRate
+        statusBar.setFrameRate(frameRate)
+        receiver.stop()
+        pipeline.reset()
+        playback.reset()
+        startReceiver()
+    }
+
     static let debugEnabled = ProcessInfo.processInfo.environment["TINYMIRROR_DEBUG"] == "1"
 
     private func startReceiver() {
         let name = Settings.receiverName
-        let started = receiver.start(name: name, resolution: Settings.resolution, debug: AppDelegate.debugEnabled)
+        let started = receiver.start(name: name, resolution: Settings.resolution,
+                                     frameRate: Settings.frameRate, debug: AppDelegate.debugEnabled)
         windowController.setReceiverState(name: name, isRunning: started)
         if started {
             statusBar.setReceiverState(String.localizedStringWithFormat(String(localized: "Visible as “%@”", bundle: .appLocalization), name))
@@ -148,11 +162,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch event {
         case .connected:
             clientConnected = true
-            statusBar.setResolutionEnabled(false)
+            statusBar.setVideoSettingsEnabled(false)
         case .clientInfo(_, _, let name):
             let displayName = name.isEmpty ? "iPhone" : name
             clientConnected = true
-            statusBar.setResolutionEnabled(false)
+            statusBar.setVideoSettingsEnabled(false)
             statusBar.setClient(displayName)
             windowController.setDeviceName(displayName)
         case .disconnected:

@@ -78,6 +78,12 @@ AirPlay 使用请求的显示高度协商视频流。例如，竖屏手机在 10
 而不是 1920×1080 的横屏画面。放大图片无法恢复缺失的细节；只有手机实际发送更多像素时，更高预设才会有帮助。
 码率和压缩质量仍由 iOS 控制。
 
+### 投屏帧率
+
+菜单栏的 **投屏帧率** 提供 **30 FPS**（默认）和 **60 FPS**，选择会被保存。
+停止投屏后修改，再从 iPhone 重新连接生效。该选项请求最高发送帧率，并非强制锁帧；
+实际帧率仍由 iPhone、画面内容和网络决定。60 FPS 需要更多带宽与解码资源。
+
 ## 声音
 
 投屏音频通过 Mac 当前默认的扬声器、耳机或其他系统输出设备播放，无需麦克风权限。
@@ -137,14 +143,14 @@ make clean    # 删除构建产物、dist/ 和 native/build/
 
 使用 `bash scripts/check-media.sh` 运行静音回归检查：覆盖原生 RTP 静音占位、重传、序号回绕、256 包突发收包，以及系统音频解码、双声道纯音波形、视频显示、音量、停止清理和窗口尺寸稳定性。用例生成测试音频，不采集用户声音，详见 [Tests/README.md](Tests/README.md)。
 
-`make` 默认执行 `build`。安装始终构建 Debug 版本，没有 Release 安装选项。使用
-`make install INSTALL_DIR="$HOME/Applications"` 可以指定其他安装目录。执行 `run` 或 `install` 前请退出正在运行的 TinyMirror；
+`make` 默认执行 `build`。安装复用 `build` 目标，默认构建 Debug；可用 `CONFIGURATION=release` 指定 Release。使用
+`make install INSTALL_DIR="$HOME/Applications"` 可以指定其他已存在的安装目录。执行 `run` 或 `install` 前请退出正在运行的 TinyMirror；
 这些目标不会替你终止正在进行的投屏，安装也不会自动使用 `sudo`。
 
 每次构建都会将可执行文件、可替换的 native 库、本地化资源、权限元数据、图标和许可证组装到
 `dist/TinyMirror.app`。本地 App 和打包脚本生成的磁盘映像均使用 ad-hoc 签名，不需要 Apple 账号、
-签名证书、钥匙串身份或公证服务。安装时会先暂存并验证新版本，再替换已有版本；替换失败会恢复旧版本，
-且不会修改用户偏好设置。
+签名证书、钥匙串身份或公证服务。安装直接使用 `cp -Rf` 强制覆盖，不提供失败回滚，
+也不会删除旧版本独有的文件；不会修改用户偏好设置。
 
 `make clean` 会删除 `.build/`、`dist/` 和 `native/build/`，包括本地依赖、依赖源码、SwiftPM 配置和 native CMake 缓存。
 下次构建会自动恢复这些内容。
@@ -177,8 +183,8 @@ iPhone ──(AirPlay：Bonjour + 配对 + FairPlay + RTSP)──▶ libMirrorCo
                                                                └─ Mac 默认音频输出
 ```
 
-- **`native/`**：`mirror_bridge.c` 将 vendored AirPlay 协议核心封装为简洁的 C API（`mb_start_video`、兼容的
-  `mb_start` 和 `mb_stop`），由 `make build`（通过 `native/build.sh`）构建为 `libMirrorCore.dylib`。
+- **`native/`**：`mirror_bridge.c` 将 vendored AirPlay 协议核心封装为简洁的 C API（`mb_start_video_with_fps`、兼容的
+  `mb_start_video` / `mb_start` 和 `mb_stop`），由 `make build`（通过 `native/build.sh`）构建为 `libMirrorCore.dylib`。
   所有第三方代码只位于这里。
 - **`Sources/TinyMirror/`**：应用本身，包括菜单栏、原生投屏窗口、`VideoPipeline` 视频封装、
   `AirPlayAudioFormat` 音频封装，以及使用 `AVSampleBufferRenderSynchronizer` 统一音画时钟的 `MediaPlayback`。音频和视频均由系统解码。

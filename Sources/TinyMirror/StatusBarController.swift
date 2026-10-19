@@ -9,6 +9,7 @@ final class StatusBarController {
     private let onTopItem: NSMenuItem
     private let stopItem: NSMenuItem
     private let resolutionMenu = NSMenu()
+    private let frameRateMenu = NSMenu()
     private let videoInfoItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
 
     var onShowWindow: (() -> Void)?
@@ -16,6 +17,7 @@ final class StatusBarController {
     var onQuit: (() -> Void)?
     var onToggleAlwaysOnTop: ((Bool) -> Void)?
     var onResolutionChange: ((MirrorResolution) -> Void)?
+    var onFrameRateChange: ((MirrorFrameRate) -> Void)?
     private static let autosaveName = "TinyMirrorStatusItem"
 
     init() {
@@ -47,7 +49,7 @@ final class StatusBarController {
         clientItem.isEnabled = false
         showItem.target = self
         onTopItem.target = self
-        let quitItem = NSMenuItem(title: String(localized: "Quit TinyMirror", bundle: .appLocalization), action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: String(localized: "Quit", bundle: .appLocalization), action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
 
         menu.addItem(stateItem)
@@ -73,6 +75,20 @@ final class StatusBarController {
         resolutionMenu.addItem(hint)
         resolutionItem.submenu = resolutionMenu
         menu.addItem(resolutionItem)
+        let frameRateItem = NSMenuItem(title: String(localized: "Frame Rate", bundle: .appLocalization), action: nil, keyEquivalent: "")
+        frameRateMenu.autoenablesItems = false
+        for frameRate in MirrorFrameRate.allCases {
+            let item = NSMenuItem(title: frameRate.title, action: #selector(selectFrameRate(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = frameRate.rawValue
+            frameRateMenu.addItem(item)
+        }
+        frameRateMenu.addItem(.separator())
+        let frameRateHint = NSMenuItem(title: hint.title, action: nil, keyEquivalent: "")
+        frameRateHint.isEnabled = false
+        frameRateMenu.addItem(frameRateHint)
+        frameRateItem.submenu = frameRateMenu
+        menu.addItem(frameRateItem)
         menu.addItem(.separator())
         menu.addItem(quitItem)
         menu.autoenablesItems = false
@@ -97,8 +113,16 @@ final class StatusBarController {
         }
     }
 
-    func setResolutionEnabled(_ enabled: Bool) {
-        for item in resolutionMenu.items where item.action != nil { item.isEnabled = enabled }
+    func setFrameRate(_ frameRate: MirrorFrameRate) {
+        for item in frameRateMenu.items where item.action != nil {
+            item.state = item.tag == frameRate.rawValue ? .on : .off
+        }
+    }
+
+    func setVideoSettingsEnabled(_ enabled: Bool) {
+        for menu in [resolutionMenu, frameRateMenu] {
+            for item in menu.items where item.action != nil { item.isEnabled = enabled }
+        }
     }
 
     func setVideoSize(width: Int, height: Int, isH265: Bool) {
@@ -110,6 +134,11 @@ final class StatusBarController {
     @objc private func selectResolution(_ sender: NSMenuItem) {
         guard sender.isEnabled, let resolution = MirrorResolution(rawValue: sender.tag) else { return }
         onResolutionChange?(resolution)
+    }
+
+    @objc private func selectFrameRate(_ sender: NSMenuItem) {
+        guard sender.isEnabled, let frameRate = MirrorFrameRate(rawValue: sender.tag) else { return }
+        onFrameRateChange?(frameRate)
     }
 
     @objc private func toggleOnTop() {
