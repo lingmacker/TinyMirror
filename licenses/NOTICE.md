@@ -36,6 +36,18 @@ upstream projects at the UxPlay commit pinned in `scripts/bootstrap.sh` and the
 SHA-256-verified dependency releases pinned in `scripts/build-deps.sh`:
 
 - UxPlay (includes `playfair`, `llhttp`): https://github.com/FDH2/UxPlay
+  TinyMirror additionally applies `native/patches/uxplay-audio-silence.patch` via
+  `scripts/bootstrap.sh`. It preserves AAC-ELD no-data RTP sequence entries so
+  clip transitions do not stall the audio reorder buffer; it does not bypass
+  retransmission for genuinely lost audio packets. It also applies
+  `native/patches/uxplay-audio-clock.patch`, retaining fractional nanoseconds per
+  sample in the RTP-to-NTP clock conversion instead of integer truncation.
+  `native/patches/uxplay-alac-pause.patch` preserves valid 32-byte ALAC silence
+  for decoding, including retransmissions, rather than misclassifying it as
+  format-only data and removing its PCM duration.
+  `native/patches/uxplay-audio-control-drain.patch` releases playable buffered
+  audio after an initial clock sync or retransmission on the control socket,
+  without requiring another ordinary audio datagram.
 - libplist: https://github.com/libimobiledevice/libplist
 - OpenSSL: https://github.com/openssl/openssl
 

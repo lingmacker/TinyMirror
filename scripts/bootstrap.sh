@@ -30,6 +30,21 @@ fetch() {
 mkdir -p vendor
 fetch vendor/UxPlay "$UXPLAY_REPO" "$UXPLAY_COMMIT"
 
+# Preserve RTP silence sequence numbers and the fractional audio sample clock.
+for AUDIO_PATCH in "$PWD/native/patches/uxplay-audio-silence.patch" \
+                   "$PWD/native/patches/uxplay-audio-clock.patch" \
+                   "$PWD/native/patches/uxplay-alac-pause.patch" \
+                   "$PWD/native/patches/uxplay-audio-control-drain.patch"; do
+    # The silence hunk omits trailing context changed by the ALAC patch.
+    if git -C vendor/UxPlay apply --unidiff-zero --reverse --check "$AUDIO_PATCH" 2>/dev/null; then
+        echo "==> $(basename "$AUDIO_PATCH") already applied"
+    else
+        git -C vendor/UxPlay apply --unidiff-zero --check "$AUDIO_PATCH"
+        git -C vendor/UxPlay apply --unidiff-zero "$AUDIO_PATCH"
+        echo "==> Applied $(basename "$AUDIO_PATCH")"
+    fi
+done
+
 echo
 echo "Dependencies ready. Next:"
 echo "  brew install cmake pkg-config                       # if not installed"

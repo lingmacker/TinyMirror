@@ -4,7 +4,8 @@ import CoreMedia
 
 /// Packages Annex-B H.264/HEVC frames for AVSampleBufferDisplayLayer's native decoder.
 final class VideoPipeline {
-    weak var displayLayer: AVSampleBufferDisplayLayer?
+    var onSampleBuffer: ((CMSampleBuffer, UInt64) -> Void)?
+    var onFlush: ((Bool) -> Void)?
     /// Reported on the main thread whenever the coded video size changes.
     var onDimensions: ((Int, Int, Bool) -> Void)?
 
@@ -22,39 +23,39 @@ final class VideoPipeline {
     private var framesSeen = 0
 
     /// Safe to call from any thread; copies the frame and processes async.
-    func handleAccessUnit(_ bytes: UnsafePointer<UInt8>, _ length: Int, isH265: Bool = false) {
+    func handleAccessUnit(_ bytes: UnsafePointer<UInt8>, _ length: Int, isH265: Bool = false, timestamp: UInt64 = 0) {
         guard length > 0 else { return }
         let generation = generationLock.withLock { self.generation }
         let data = Data(bytes: bytes, count: length)
         queue.async { [weak self] in
             guard let self, self.generationLock.withLock({ self.generation }) == generation else { return }
-            self.process(data, isH265: isH265, generation: generation)
+            self.process(data, isH265: isH265, timestamp: timestamp, generation: generation)
         }
     }
 
     func flush() {
         queue.async { [weak self] in
-            self?.displayLayer?.sampleBufferRenderer.flush()
+            self?.onFlush?(false)
         }
     }
 
     func reset() {
         generationLock.withLock { generation += 1 }
-        queue.async { [weak self] in
-            guard let self else { return }
-            self.displayLayer?.sampleBufferRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
-            self.formatDescription = nil
-            self.isH265 = false
-            self.vps = nil
-            self.sps = nil
-            self.pps = nil
-            self.lastReportedSize = (0, 0) // A reconnect must reopen even at the same resolution.
+        // Drain in-flight video before AppDelegate resets the shared playback clock.
+        queue.sync {
+            onFlush?(true)
+            formatDescription = nil
+            isH265 = false
+            vps = nil
+            sps = nil
+            pps = nil
+            lastReportedSize = (0, 0) // A reconnect must reopen even at the same resolution.
         }
     }
 
     // MARK: - Parsing
 
-    private func process(_ frame: Data, isH265: Bool, generation: Int) {
+    private func process(_ frame: Data, isH265: Bool, timestamp: UInt64, generation: Int) {
         if self.isH265 != isH265 {
             self.isH265 = isH265
             formatDescription = nil
@@ -107,17 +108,8 @@ final class VideoPipeline {
         guard let formatDescription, !vclUnits.isEmpty else { return }
         guard let sampleBuffer = makeSampleBuffer(vclUnits, format: formatDescription) else { return }
 
-        guard let layer = displayLayer else {
-            if framesSeen < 3 { NSLog("[TinyMirror] no display layer — frames are being dropped") }
-            return
-        }
-        let renderer = layer.sampleBufferRenderer
-        if renderer.status == .failed {
-            NSLog("[TinyMirror] display layer failed: %@",
-                  renderer.error?.localizedDescription ?? "unknown")
-            renderer.flush()
-        }
-        renderer.enqueue(sampleBuffer)
+        guard generationLock.withLock({ self.generation }) == generation else { return }
+        onSampleBuffer?(sampleBuffer, timestamp)
     }
 
     private func rebuildFormatDescription(generation: Int) {
@@ -207,26 +199,19 @@ final class VideoPipeline {
 
         var sampleBuffer: CMSampleBuffer?
         var sampleSize = count
+        var timing = CMSampleTimingInfo(duration: .invalid, presentationTimeStamp: .zero, decodeTimeStamp: .invalid)
         status = CMSampleBufferCreateReady(
             allocator: kCFAllocatorDefault,
             dataBuffer: blockBuffer,
             formatDescription: format,
             sampleCount: 1,
-            sampleTimingEntryCount: 0,
-            sampleTimingArray: nil,
+            sampleTimingEntryCount: 1,
+            sampleTimingArray: &timing,
             sampleSizeEntryCount: 1,
             sampleSizeArray: &sampleSize,
             sampleBufferOut: &sampleBuffer)
         guard status == noErr, let sampleBuffer else { return nil }
 
-        // Display each frame as soon as it decodes — lowest possible latency.
-        if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: true) as? [CFMutableDictionary],
-           let dict = attachments.first {
-            CFDictionarySetValue(
-                dict,
-                Unmanaged.passUnretained(kCMSampleAttachmentKey_DisplayImmediately).toOpaque(),
-                Unmanaged.passUnretained(kCFBooleanTrue).toOpaque())
-        }
         return sampleBuffer
     }
 

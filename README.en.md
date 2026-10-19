@@ -19,7 +19,7 @@ your iPhone's Control Center under **Screen Mirroring**, exactly like an Apple T
 — pick it, and your phone shows up in a native macOS window on your desktop.
 Nothing to install on the phone.
 
-TinyMirror is display-only: mouse and keyboard input stays on your Mac.
+TinyMirror receives video and audio; mouse and keyboard input stays on your Mac.
 
 ---
 
@@ -69,9 +69,10 @@ its screen; moving or resizing a visible window does not force it back there.
 While idle, the window uses a 9:18 phone-shaped canvas. Connecting follows the
 device's actual aspect ratio; disconnecting restores the default phone shape.
 
-Drag the title bar or picture to move the window. Resizing preserves the video
-aspect ratio, and rotating the phone fits the new orientation to your display
-without cropping the picture.
+Drag the title bar or picture to move the window. Resizing preserves the current
+canvas aspect ratio. Changes in resolution or aspect ratio within the same
+orientation fit inside the canvas without resetting the window. Portrait/landscape
+changes preserve your chosen scale within the display bounds, without cropping.
 
 Choose **Keep Window on Top** in the menu bar to float the mirror above other
 applications. It is on by default, and your choice is remembered across launches.
@@ -94,6 +95,18 @@ a portrait phone may send about 498×1080 for the 1080p preset, rather than a
 a higher preset can help only if the phone actually sends more pixels. Bitrate
 and compression quality remain controlled by iOS.
 
+## Audio
+
+Mirrored audio plays through the Mac's current default speakers, headphones, or other system output; no microphone permission is needed.
+The app uses native decoding for stereo 44.1 kHz AAC-ELD, AAC-LC, ALAC, and 16-bit PCM, with a shared audio/video playback clock.
+Adjust playback volume on the iPhone and system output volume on the Mac. Stopping, disconnecting, or quitting clears queued audio.
+Standalone ALAC uses a short jitter buffer without adding seconds of playout delay. Valid compressed silence at startup, stop, or retransmission is decoded rather than discarded by packet length; the screen-mirroring latency policy is unchanged.
+
+TinyMirror plays the audio your phone continues to send; AirPlay does not report which phone app is in the foreground. If an app keeps playing after being backgrounded, pause it on the phone, check its background/picture-in-picture playback settings, or stop mirroring.
+
+Apps that do not send audio over AirPlay, or DRM-protected content, may remain silent.
+Network jitter and Bluetooth output can add latency; try the Mac speakers or wired headphones if synchronization is noticeably off.
+
 ## Languages
 
 The app supports **English** and **Simplified Chinese**, following the macOS
@@ -106,8 +119,8 @@ Restart the app after changing its language in System Settings.
 
 Worth reading before you install — some of these are permanent.
 
-- **No audio.** Video only; audio frames are currently discarded.
-- **Display only.** Touch, keyboard, and pointer forwarding are not supported.
+- **Protected content is limited.** DRM video and audio may appear black or remain silent.
+- **No remote control.** Touch, keyboard, and pointer forwarding are not supported.
 - **No Mac App Store.** The App Store accepts neither the AirPlay
   implementation nor GPL-licensed code. Direct download is the only route, the
   same one Reflector and AirServer take.
@@ -139,6 +152,9 @@ This needs network access once and takes longer than incremental builds. Homebre
 OpenSSL/libplist binaries are not used: newer bottles may require a newer macOS
 version than the app supports. If `.build/` or those local dependencies are deleted,
 `make build` recreates them automatically and refreshes CMake's dependency paths.
+`bootstrap.sh` also idempotently applies `native/patches/uxplay-audio-silence.patch`
+to prevent screen-mirroring silence markers from blocking RTP audio reordering;
+genuinely lost packets still request retransmission.
 
 ```sh
 make build    # fetch pinned UxPlay, incrementally build the core + Debug app
@@ -146,6 +162,8 @@ make run      # build and launch dist/TinyMirror.app
 make install  # build Debug and install to /Applications/TinyMirror.app
 make clean    # remove build products, dist/, and native/build/
 ```
+
+Run `bash scripts/check-media.sh` for muted regressions covering native RTP silence markers, retransmission, sequence wraparound, 256-packet bursts, system decoding, stereo tone fidelity, video display, volume, cleanup, and stable window geometry. Fixtures are generated locally; user audio is not recorded. See [Tests/README.md](Tests/README.md).
 
 `make` defaults to `build`. Installation always builds Debug for temporary local
 use; there is no Release install option. Use
@@ -188,24 +206,27 @@ message; ad-hoc builds cannot be submitted for Apple notarization.
 ## How it works
 
 ```
-iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP/H.264 or HEVC)──▶ libMirrorCore.dylib
-                                                                     │ decrypted Annex-B H.264/HEVC
-                                                                     ▼
-                                              Swift app: VideoPipeline ▶ AVSampleBufferDisplayLayer
+iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP)──▶ libMirrorCore.dylib
+                                                        ├─ H.264/HEVC ─▶ VideoPipeline
+                                                        └─ audio ──────▶ AirPlayAudioFormat
+                                                                            │
+                                                              MediaPlayback (native decode/sync)
+                                                              ├─ native mirror window
+                                                              └─ default Mac audio output
 ```
 
 - **`native/`** — `mirror_bridge.c` wraps the vendored AirPlay protocol core
   behind a small C API (`mb_start_video`, compatible `mb_start`, and `mb_stop`), built as
   `libMirrorCore.dylib` by `make build` (via `native/build.sh`). All third-party code lives here and nowhere else.
-- **`Sources/TinyMirror/`** — the app: menu bar shell, native mirror window,
-  and H.264/HEVC → `AVSampleBufferDisplayLayer` pipeline (native decode).
+- **`Sources/TinyMirror/`** — menu bar shell, native mirror window, `VideoPipeline` video packaging,
+  `AirPlayAudioFormat` audio packaging, and `MediaPlayback` with a shared `AVSampleBufferRenderSynchronizer` clock. Both streams use system decoding.
 - **`Sources/TinyMirror/Resources/`** — bundle metadata (`Info.plist`), localized strings, app artwork, and menu bar assets. Xcode's `actool` compiles the charcoal, white, and orange “Echo” design in `AppIcon.icon/` into a native icon stack and `.icns`. `Assets.xcassets/` supplies 18-point monochrome menu bar templates: outlined frames when idle, a filled front frame when connected. Editable menu bar sources are `MenuBarIcon*.svg`; the root `icon.png` is the documentation export.
 - **`vendor/`** — [UxPlay](https://github.com/FDH2/UxPlay), fetched at a pinned
   commit by `scripts/bootstrap.sh` rather than committed.
 
 ## Roadmap
 
-- [ ] Audio playback (AAC-ELD decode via AudioToolbox)
+- [x] Audio playback (AAC-ELD / AAC-LC / ALAC / PCM) with a shared audio/video clock
 - [x] H.265/HEVC support and selectable resolution requests
 
 Contributions welcome.

@@ -39,6 +39,7 @@ let package = Package(
                 .linkedLibrary("MirrorCore"),
                 .linkedFramework("AppKit"),
                 .linkedFramework("AVFoundation"),
+                .linkedFramework("AudioToolbox"),
                 .linkedFramework("CoreMedia"),
                 .linkedFramework("QuartzCore"),
             ]

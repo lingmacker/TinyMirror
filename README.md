@@ -18,7 +18,7 @@ TinyMirror 可以将 Mac 变成无线投屏接收器。它会像 Apple TV 一样
 iPhone 控制中心的**屏幕镜像**列表中。选择它后，iPhone 画面会显示在 Mac 的原生窗口中，
 无需在 iPhone 上安装任何应用。
 
-TinyMirror 仅接收画面，不支持从 Mac 向 iPhone 转发鼠标或键盘操作。
+TinyMirror 接收画面与声音，不支持从 Mac 向 iPhone 转发鼠标或键盘操作。
 
 ---
 
@@ -60,7 +60,7 @@ TinyMirror 运行在**菜单栏**中，不显示 Dock 图标。手机连接后�
 新显示的投屏窗口会在屏幕中央打开；移动或调整可见窗口的大小不会强制它回到中央。空闲时窗口使用
 9:18 的手机比例画布；连接后会按照设备的实际比例显示，断开后恢复默认手机比例。
 
-拖动标题栏或画面可以移动窗口。调整大小时会保持视频比例；旋转手机后，画面会适配显示器且不会被裁切。
+拖动标题栏或画面可以移动窗口。调整大小时会保持当前画布比例；同方向的视频比例或分辨率变化只在窗内等比适配，不会重置窗口大小。横竖方向切换时，窗口会保留手动选定的尺度并适配屏幕边界，不裁切画面。
 
 在菜单栏选择 **窗口置顶**，可以让投屏窗口浮在其他应用上方。该选项默认开启，并会在重启后保留。
 
@@ -78,6 +78,18 @@ AirPlay 使用请求的显示高度协商视频流。例如，竖屏手机在 10
 而不是 1920×1080 的横屏画面。放大图片无法恢复缺失的细节；只有手机实际发送更多像素时，更高预设才会有帮助。
 码率和压缩质量仍由 iOS 控制。
 
+## 声音
+
+投屏音频通过 Mac 当前默认的扬声器、耳机或其他系统输出设备播放，无需麦克风权限。
+支持 44.1 kHz 双声道的 AAC-ELD、AAC-LC、ALAC 和 16 位 PCM，由系统解码；画面和声音使用同一个播放时钟。
+可通过 iPhone 播放音量与 Mac 系统音量调整声音。停止投屏、断开连接或退出后会清空音频缓冲。
+单独投送 ALAC 音频也采用短抖动缓冲，不额外叠加秒级播放延迟。起播、停播和重传中的有效压缩静音帧会正常解码，不按包长丢弃；屏幕镜像的低延迟策略不变。
+
+TinyMirror 会播放手机持续发送的声音，无法获知手机上哪个应用在前台。若应用切到后台仍有声音，请在手机端暂停或检查应用的后台／小窗播放设置；也可以停止投屏。
+
+如果某个应用没有向 AirPlay 发送音频，或内容受 DRM 保护，TinyMirror 无法为它补出声音。
+网络抖动与蓝牙输出设备也可能增加延迟；遇到明显音画不同步时，请先用 Mac 扬声器或有线耳机重试。
+
 ## 语言
 
 应用支持**英文**和**简体中文**，跟随 macOS 的系统或应用语言设置。其他语言会回退到英文。
@@ -88,8 +100,8 @@ AirPlay 使用请求的显示高度协商视频流。例如，竖屏手机在 10
 
 安装前请注意，以下部分限制是长期存在的：
 
-- **没有音频。** 当前仅支持视频，音频帧会被丢弃。
-- **仅显示画面。** 不支持触控、键盘和鼠标转发。
+- **受保护的内容受限。** DRM 视频和音频可能黑屏或静音。
+- **不支持远程操控。** 不支持触控、键盘和鼠标转发。
 - **不支持 Mac App Store。** App Store 不接受此 AirPlay 实现及 GPL 许可代码，因此只能直接下载使用。
 
 ## 故障排查
@@ -114,6 +126,7 @@ brew install cmake pkg-config
 `.build/deps/macos26` 下为 macOS 26 构建静态库。首次构建需要网络，耗时也会比增量构建更长。
 不会使用 Homebrew 的 OpenSSL/libplist 二进制包，因为较新的 bottle 可能要求更高版本的 macOS。
 如果删除了 `.build/` 或本地依赖，`make build` 会自动重新创建并刷新 CMake 的依赖路径。
+`bootstrap.sh` 还会幂等应用 `native/patches/uxplay-audio-silence.patch`，修复镜像静音占位包阻塞音频重排的问题；真实丢包仍会请求重传。
 
 ```sh
 make build    # 获取固定版本的 UxPlay，增量构建 native core 和 Debug 应用
@@ -121,6 +134,8 @@ make run      # 构建并启动 dist/TinyMirror.app
 make install  # 构建 Debug 版本并安装到 /Applications/TinyMirror.app
 make clean    # 删除构建产物、dist/ 和 native/build/
 ```
+
+使用 `bash scripts/check-media.sh` 运行静音回归检查：覆盖原生 RTP 静音占位、重传、序号回绕、256 包突发收包，以及系统音频解码、双声道纯音波形、视频显示、音量、停止清理和窗口尺寸稳定性。用例生成测试音频，不采集用户声音，详见 [Tests/README.md](Tests/README.md)。
 
 `make` 默认执行 `build`。安装始终构建 Debug 版本，没有 Release 安装选项。使用
 `make install INSTALL_DIR="$HOME/Applications"` 可以指定其他安装目录。执行 `run` 或 `install` 前请退出正在运行的 TinyMirror；
@@ -153,23 +168,26 @@ Ad-hoc 签名只提供代码完整性，不证明开发者身份，也不等同�
 ## 工作原理
 
 ```text
-iPhone ──(AirPlay：Bonjour + 配对 + FairPlay + RTSP/H.264 或 HEVC)──▶ libMirrorCore.dylib
-                                                                     │ 解密后的 Annex-B H.264/HEVC
-                                                                     ▼
-                                              Swift 应用：VideoPipeline ▶ AVSampleBufferDisplayLayer
+iPhone ──(AirPlay：Bonjour + 配对 + FairPlay + RTSP)──▶ libMirrorCore.dylib
+                                                       ├─ H.264/HEVC ─▶ VideoPipeline
+                                                       └─ 音频包 ────▶ AirPlayAudioFormat
+                                                                         │
+                                                               MediaPlayback（系统解码、音画同步）
+                                                               ├─ 原生投屏窗口
+                                                               └─ Mac 默认音频输出
 ```
 
 - **`native/`**：`mirror_bridge.c` 将 vendored AirPlay 协议核心封装为简洁的 C API（`mb_start_video`、兼容的
   `mb_start` 和 `mb_stop`），由 `make build`（通过 `native/build.sh`）构建为 `libMirrorCore.dylib`。
   所有第三方代码只位于这里。
-- **`Sources/TinyMirror/`**：应用本身，包括菜单栏外壳、原生投屏窗口和 H.264/HEVC →
-  `AVSampleBufferDisplayLayer` 视频管线（由系统解码）。
+- **`Sources/TinyMirror/`**：应用本身，包括菜单栏、原生投屏窗口、`VideoPipeline` 视频封装、
+  `AirPlayAudioFormat` 音频封装，以及使用 `AVSampleBufferRenderSynchronizer` 统一音画时钟的 `MediaPlayback`。音频和视频均由系统解码。
 - **`Sources/TinyMirror/Resources/`**：集中存放 `Info.plist`、本地化文案、应用图标和菜单栏资源。`AppIcon.icon/` 中的黑白橘「叠幕」由 Xcode 的 `actool` 编译为原生图标栈和 `.icns`；`Assets.xcassets/` 提供 18 点菜单栏单色模板，未连接时双框空心，连接后前框实心。可编辑菜单栏源文件为 `MenuBarIcon*.svg`，根目录的 `icon.png` 用于文档展示。
 - **`vendor/`**：[UxPlay](https://github.com/FDH2/UxPlay) 的源码目录，由 `scripts/bootstrap.sh` 按固定 commit 获取，不提交到仓库。
 
 ## 路线图
 
-- [ ] 音频播放（使用 AudioToolbox 解码 AAC-ELD）
+- [x] 音频播放（AAC-ELD / AAC-LC / ALAC / PCM）与统一音画时钟
 - [x] H.265/HEVC 支持和可选分辨率请求
 
 欢迎贡献代码。

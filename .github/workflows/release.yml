@@ -37,6 +37,9 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: ./scripts/package.sh
 
+      - name: Verify media playback and stable window geometry
+        run: bash scripts/check-media.sh
+
       - name: Verify packaged app startup
         run: python3 scripts/check-app.py dist/TinyMirror.app
 
@@ -46,12 +49,12 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           RELEASE_NOTES: |
             - 修复下载版因资源路径错误导致的启动崩溃与菜单栏图标缺失。
-            - 通过 Wi-Fi 将 iPhone 屏幕投射到 Mac，无需安装手机端 App。
+            - 通过 Wi-Fi 将 iPhone 画面和声音投射到 Mac，无需安装手机端 App。
             - 支持窗口置顶、全屏和旋转适配，可选 720p、1080p、2K、4K 分辨率。
             - 原生菜单栏操作，支持简体中文和英文。
             - 全新黑白橘「叠幕」应用图标与自适应菜单栏图标。
 
-            需要 macOS 26 或更高版本。目前仅支持画面镜像，不支持音频和远程操控。
+            需要 macOS 26 或更高版本。不支持远程操控；受 DRM 保护的内容仍可能黑屏或静音。
             应用采用 ad-hoc 签名，未经 Apple 公证；首次打开可能需要在系统设置中批准。
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then

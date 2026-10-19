@@ -18,8 +18,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     private var receiverName = "TinyMirror"
     private var receiverAvailable = true
     private var deviceName: String?
-    private var videoSize: NSSize = .zero
-    private var fullScreenVideoSize: NSSize = .zero
+    private var canvasSize: NSSize = .zero
+    private var fullScreenCanvasSize: NSSize?
     private var firstFrameReady = false
     private var buttonTrackingArea: NSTrackingArea?
     private var liveResizeAxis: ResizeAxis?
@@ -115,7 +115,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         if name != deviceName || name == nil { firstFrameReady = false }
         deviceName = name
         if name == nil {
-            videoSize = .zero
+            canvasSize = .zero
+            fullScreenCanvasSize = nil
             resetIdleWindowSize()
         }
         updatePlaybackState()
@@ -226,13 +227,24 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     /// The bezel sits outside the picture, so only the inner rectangle follows the video ratio.
     func setVideoDimensions(width: Int, height: Int) {
         guard let window, width > 0, height > 0 else { return }
-        videoSize = NSSize(width: width, height: height)
+        let firstCanvas = canvasSize == .zero
+        let orientationChanged = width != height && (canvasSize.width == canvasSize.height
+            || (width > height) != (canvasSize.width > canvasSize.height))
+        // Fit changing content inside a stable canvas; only a direction change resizes the window.
+        guard firstCanvas || orientationChanged else { return }
+        canvasSize = NSSize(width: width, height: height)
         guard !frameView.isFullScreen, !window.styleMask.contains(.fullScreen) else { return }
         let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
             ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let aspect = videoSize.width / videoSize.height
+        let aspect = canvasSize.width / canvasSize.height
         let border = frameView.contentInset * 2
-        let targetHeight = min(780, screen.height * 0.8 - border, (screen.width * 0.8 - border) / aspect)
+        let targetHeight: CGFloat
+        if firstCanvas {
+            targetHeight = min(780, screen.height * 0.8 - border, (screen.width * 0.8 - border) / aspect)
+        } else {
+            let longEdge = max(window.frame.width, window.frame.height) - border
+            targetHeight = min(longEdge / max(1, aspect), screen.height - border, (screen.width - border) / aspect)
+        }
         let pictureWidth = targetHeight * aspect
         let size = NSSize(width: pictureWidth + border, height: targetHeight + border)
         let minWidth = min(pictureWidth, max(260, 160 * aspect))
@@ -253,9 +265,9 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
 
     // Zeroing native aspectRatio also zeros resize increments and breaks AppKit restoration.
     func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
-        guard videoSize != .zero, !frameView.isFullScreen, !sender.styleMask.contains(.fullScreen) else { return frameSize }
+        guard canvasSize != .zero, !frameView.isFullScreen, !sender.styleMask.contains(.fullScreen) else { return frameSize }
         let border = frameView.contentInset * 2
-        let aspect = videoSize.width / videoSize.height
+        let aspect = canvasSize.width / canvasSize.height
         let width = max(frameSize.width, sender.minSize.width)
         let height = max(frameSize.height, sender.minSize.height)
         let suggestedAxis: ResizeAxis = abs(frameSize.width - sender.frame.width)
@@ -273,7 +285,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillEnterFullScreen(_ notification: Notification) {
         fullScreenTransition = .entering
-        fullScreenVideoSize = videoSize
+        fullScreenCanvasSize = canvasSize
         frameView.isFullScreen = true
         frameView.layoutSubtreeIfNeeded()
         setWindowButtonsVisible(true)
@@ -298,15 +310,22 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         frameView.isFullScreen = false
         frameView.layoutSubtreeIfNeeded()
         updateWindowLevel()
-        if videoSize == .zero && fullScreenVideoSize != .zero {
-            resetIdleWindowSize()
-        } else if videoSize != .zero && videoSize != fullScreenVideoSize {
-            setVideoDimensions(width: Int(videoSize.width), height: Int(videoSize.height))
-        }
+        restoreWindowedCanvas()
         refreshWindowButtons()
         if dismissAfterFullScreen {
             dismissAfterFullScreen = false
             dismiss()
+        }
+    }
+
+    private func restoreWindowedCanvas() {
+        let nextCanvas = canvasSize
+        canvasSize = fullScreenCanvasSize ?? .zero
+        if nextCanvas == .zero {
+            canvasSize = .zero
+            if fullScreenCanvasSize != NSSize.zero { resetIdleWindowSize() }
+        } else {
+            setVideoDimensions(width: Int(nextCanvas.width), height: Int(nextCanvas.height))
         }
     }
 
@@ -315,6 +334,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         frameView.isFullScreen = false
         frameView.layoutSubtreeIfNeeded()
         updateWindowLevel()
+        restoreWindowedCanvas()
         refreshWindowButtons()
         if dismissAfterFullScreen {
             dismissAfterFullScreen = false

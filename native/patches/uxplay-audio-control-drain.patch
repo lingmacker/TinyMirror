@@ -1,0 +1,82 @@
+diff --git a/lib/raop_rtp.c b/lib/raop_rtp.c
+--- a/lib/raop_rtp.c
++++ b/lib/raop_rtp.c
+@@ -585,44 +585,41 @@
+ 
+             raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, 1);
+ 
+-            if (!raop_rtp->initial_sync) {
+-                /* wait until the first sync before dequeing ALAC */
+-                continue;
+-            } else {
+-            // Render continuous buffer entries
+-                void *payload = NULL;
+-                unsigned int payload_size = 0;
+-                unsigned short seqnum = 0;
+-                uint32_t rtp_timestamp = 0;
+-
+-                while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &rtp_timestamp, &seqnum, no_resend))) {
+-                    audio_decode_struct audio_data; 
+-                    audio_data.rtp_time = rtp_timestamp;
+-                    audio_data.seqnum = seqnum;
+-                    audio_data.data_len = payload_size;
+-                    audio_data.data = payload;
+-                    audio_data.ct = raop_rtp->ct;
+-                    audio_data.ntp_time_remote = rtp_time_to_client_ntp(raop_rtp, rtp_timestamp);
+-                    audio_data.ntp_time_local  = raop_ntp_convert_remote_time(raop_rtp->ntp, audio_data.ntp_time_remote);
+-
+-                    if (logger_debug_data) {
+-                        uint64_t ntp_now = raop_ntp_get_local_time();
+-                        int64_t latency = (audio_data.ntp_time_local ? ((int64_t) ntp_now) - ((int64_t) audio_data.ntp_time_local) : 0); 
+-                        logger_log(raop_rtp->logger, LOGGER_DEBUG,
+-                                   "raop_rtp audio: now = %8.6f, ntp = %8.6f, latency = %9.6f, ts = %8.6f, rtp_time=%u seqnum = %5u %s %d",
+-                                   (double) ntp_now / SEC, (double) audio_data.ntp_time_local / SEC, (double) latency / SEC,
+-                                   (double) audio_data.ntp_time_remote /SEC, rtp_timestamp, seqnum, type, payload_size);
+-                    }
+-
+-                    raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &audio_data);
+-                    free(payload);
+-                }
+-
+-                /* Handle possible resend requests */
+-                if (!no_resend) {
+-                    raop_buffer_handle_resends(raop_rtp->buffer, raop_rtp_resend_callback, raop_rtp);
+-                }
++        }
++
++        /* Sync and retransmissions can unblock audio without a later data datagram. */
++        if (!raop_rtp->initial_sync) continue;
++        void *payload = NULL;
++        unsigned int payload_size = 0;
++        unsigned short seqnum = 0;
++        uint32_t rtp_timestamp = 0;
++
++        while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &rtp_timestamp, &seqnum, no_resend))) {
++            audio_decode_struct audio_data;
++            audio_data.rtp_time = rtp_timestamp;
++            audio_data.seqnum = seqnum;
++            audio_data.data_len = payload_size;
++            audio_data.data = payload;
++            audio_data.ct = raop_rtp->ct;
++            audio_data.ntp_time_remote = rtp_time_to_client_ntp(raop_rtp, rtp_timestamp);
++            audio_data.ntp_time_local  = raop_ntp_convert_remote_time(raop_rtp->ntp, audio_data.ntp_time_remote);
++
++            if (logger_debug_data) {
++                uint64_t ntp_now = raop_ntp_get_local_time();
++                int64_t latency = (audio_data.ntp_time_local ? ((int64_t) ntp_now) - ((int64_t) audio_data.ntp_time_local) : 0);
++                logger_log(raop_rtp->logger, LOGGER_DEBUG,
++                           "raop_rtp audio: now = %8.6f, ntp = %8.6f, latency = %9.6f, ts = %8.6f, rtp_time=%u seqnum = %5u %s %d",
++                           (double) ntp_now / SEC, (double) audio_data.ntp_time_local / SEC, (double) latency / SEC,
++                           (double) audio_data.ntp_time_remote /SEC, rtp_timestamp, seqnum, type, payload_size);
+             }
++
++            raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &audio_data);
++            free(payload);
++        }
++
++        /* Handle possible resend requests */
++        if (!no_resend) {
++            raop_buffer_handle_resends(raop_rtp->buffer, raop_rtp_resend_callback, raop_rtp);
+         }
+     }
+ 

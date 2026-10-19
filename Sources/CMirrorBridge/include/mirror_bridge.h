@@ -23,14 +23,16 @@ typedef enum {
     MB_EVENT_VIDEO_RESET = 7,   /* value = reset_type */
     MB_EVENT_CLIENT_INFO = 8,   /* info = "deviceid\tmodel\tname" */
     MB_EVENT_SOURCE_SIZE = 9,   /* info = "<width>x<height>" (source pixels) */
-    MB_EVENT_AUDIO_FORMAT = 10, /* value = compression type (ct) */
-    MB_EVENT_MIRROR_RUNNING = 11 /* value = 0/1 */
+    MB_EVENT_AUDIO_FORMAT = 10, /* value = ct; info = samples per frame (decimal) */
+    MB_EVENT_MIRROR_RUNNING = 11, /* value = 0/1 */
+    MB_EVENT_AUDIO_VOLUME = 12, /* value = client volume in milli-decibels (-144000...0) */
+    MB_EVENT_AUDIO_MODE = 13    /* value = usingScreen (0 standalone / 1 mirroring), before AUDIO_FORMAT */
 } mb_event_t;
 
 /* Annex-B H.264/H.265 frame data (may contain several NAL units). */
 typedef void (*mb_video_cb)(void *ctx, const uint8_t *data, int len,
                             uint64_t ntp_local, uint64_t ntp_remote, int is_h265);
-/* Compressed audio frame; ct: 2=ALAC 4=AAC-LC 8=AAC-ELD. */
+/* Audio packet; ct: 1=PCM 2=ALAC 4=AAC-LC 8=AAC-ELD. Timestamps are local Unix nanoseconds. */
 typedef void (*mb_audio_cb)(void *ctx, const uint8_t *data, int len,
                             unsigned char ct, uint64_t ntp_local);
 typedef void (*mb_event_cb)(void *ctx, int event, int value, const char *info);

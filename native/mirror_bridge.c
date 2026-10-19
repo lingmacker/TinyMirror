@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 #include <unistd.h>
 
 #include "raop.h"
@@ -75,12 +76,23 @@ static void cb_video_report_size(void *cls, float *width_source, float *height_s
 
 static void cb_audio_get_format(void *cls, unsigned char *ct, unsigned short *spf,
                                 bool *usingScreen, bool *isMedia, uint64_t *audioFormat) {
-    (void)cls; (void)spf; (void)usingScreen; (void)isMedia; (void)audioFormat;
-    if (ct) emit(MB_EVENT_AUDIO_FORMAT, (int)*ct, NULL);
+    (void)cls; (void)isMedia; (void)audioFormat;
+    if (ct) {
+        char info[16];
+        emit(MB_EVENT_AUDIO_MODE, usingScreen && *usingScreen ? 1 : 0, NULL);
+        snprintf(info, sizeof(info), "%u", spf ? (unsigned)*spf : 0);
+        emit(MB_EVENT_AUDIO_FORMAT, (int)*ct, info);
+    }
 }
 
 static double cb_audio_set_client_volume(void *cls) { (void)cls; return 0.0; }
-static void cb_audio_set_volume(void *cls, float volume) { (void)cls; (void)volume; }
+static void cb_audio_set_volume(void *cls, float volume) {
+    (void)cls;
+    if (!isfinite(volume)) return;
+    if (volume < -144.0f) volume = -144.0f;
+    if (volume > 0.0f) volume = 0.0f;
+    emit(MB_EVENT_AUDIO_VOLUME, (int)(volume * 1000.0f), NULL);
+}
 static bool cb_check_register(void *cls, const char *pk_str) { (void)cls; (void)pk_str; return true; }
 static const char *cb_passwd(void *cls, int *len) { (void)cls; if (len) *len = 0; return NULL; }
 static int cb_video_set_codec(void *cls, video_codec_t codec) { (void)cls; (void)codec; return 0; }

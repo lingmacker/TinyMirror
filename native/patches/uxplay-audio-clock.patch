@@ -1,0 +1,12 @@
+diff --git a/lib/raop_rtp.c b/lib/raop_rtp.c
+--- a/lib/raop_rtp.c
++++ b/lib/raop_rtp.c
+@@ -665,7 +665,7 @@
+     }
+ 
+     raop_rtp->ct = *ct;
+-    raop_rtp->rtp_clock_rate = SECOND_IN_NSECS / *sr;
++    raop_rtp->rtp_clock_rate = (double) SECOND_IN_NSECS / *sr;
+ 
+     /* Initialize ports and sockets */
+     raop_rtp->control_lport = *control_lport;

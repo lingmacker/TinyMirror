@@ -1,0 +1,25 @@
+diff --git a/lib/raop_rtp.c b/lib/raop_rtp.c
+--- a/lib/raop_rtp.c
++++ b/lib/raop_rtp.c
+@@ -542,11 +542,8 @@
+          * three times; the secnum and rtp_timestamp increment according to the same pattern as 
+          * AAC-ELD packets with audio content.*/
+ 
+-        /* When the ALAC audio stream starts, the initial packets are length-44 packets with 
+-         * the same 32-byte encrypted payload which after decryption is the beginning of a
+-         * 32-byte ALAC packet, presumably with format information, but not actual audio data.
+-         * The secnum and rtp_timestamp in the packet header increment according to the same
+-         * pattern as ALAC packets with audio content */	
++        /* A 32-byte ALAC payload can encode valid silence (44 bytes with the RTP header).
++         * Preserve it for decoding and timing, including at stream startup and during pauses. */
+ 
+         /* The first ALAC packet with data seems to be decoded just before the first sync event
+          * so its dequeuing should be delayed until the first rtp sync has occurred */
+@@ -585,7 +582,6 @@
+             }	    
+ 
+             /* Let the reorder buffer account for no-data sequence numbers too. */
+-            if (raop_rtp->ct == 2 && packetlen == 44)  continue;   /* ignore the ALAC packets with format information only. */
+ 
+             raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, 1);
+ 

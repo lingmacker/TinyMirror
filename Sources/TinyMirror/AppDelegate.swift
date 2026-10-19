@@ -6,10 +6,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Created after NSApplication.run() so the menu bar item can be placed.
     private lazy var statusBar = StatusBarController()
     private let windowController = MirrorWindowController()
+    private lazy var playback = MediaPlayback(displayLayer: windowController.videoView.displayLayer)
     private var clientConnected = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        wireVideo()
+        wireMedia()
         wireUI()
         startReceiver()
         if ProcessInfo.processInfo.environment["TINYMIRROR_PREVIEW"] == "1" {
@@ -19,13 +20,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         receiver.stop()
+        playback.reset()
     }
 
-    private func wireVideo() {
-        pipeline.displayLayer = windowController.videoView.displayLayer
-        receiver.onVideo = { [pipeline] data, length, isH265 in
-            pipeline.handleAccessUnit(data, length, isH265: isH265)
+    private func wireMedia() {
+        pipeline.onSampleBuffer = { [playback] sample, timestamp in
+            playback.enqueueVideo(sample, timestamp: timestamp)
         }
+        pipeline.onFlush = { [playback] removeImage in
+            playback.flushVideo(removingDisplayedImage: removeImage)
+        }
+        receiver.onVideo = { [pipeline] data, length, isH265, timestamp in
+            pipeline.handleAccessUnit(data, length, isH265: isH265, timestamp: timestamp)
+        }
+        receiver.onAudio = { [playback] data, length, ct, timestamp in
+            playback.handleAudio(data, length, compressionType: ct, timestamp: timestamp)
+        }
+        receiver.onAudioFormat = { [playback] ct, spf, usingScreen in
+            playback.configureAudio(compressionType: ct, samplesPerFrame: spf, screenMirroring: usingScreen)
+        }
+        receiver.onAudioVolume = { [playback] volume in playback.setVolume(decibels: volume) }
+        receiver.onAudioFlush = { [playback] in playback.flushAudio() }
         pipeline.onDimensions = { [weak self] width, height, isH265 in
             guard let self else { return }
             self.statusBar.setVideoSize(width: width, height: height, isH265: isH265)
@@ -74,6 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController.dismiss()
         windowController.setDeviceName(nil)
         pipeline.reset()
+        playback.reset()
     }
 
     private func setResolution(_ resolution: MirrorResolution) {
@@ -83,6 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.setResolution(resolution)
         receiver.stop()
         pipeline.reset()
+        playback.reset()
         startReceiver()
     }
 
@@ -139,6 +156,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pipeline.flush()
         case .connReset:
             pipeline.reset()
+            playback.reset()
         default:
             break
         }

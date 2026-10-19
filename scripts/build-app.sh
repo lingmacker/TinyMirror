@@ -22,6 +22,10 @@ BIN_DIR="$(swift build "${SWIFT_ARGS[@]}" -c "$CONFIGURATION" --show-bin-path)"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$BIN_DIR/TinyMirror" "$APP/Contents/MacOS/"
+# Packaged apps must use their bundled core, not a different workspace build.
+for RPATH in @executable_path/../../../../native/build @executable_path/../../../native/build @executable_path/../../native/build; do
+    install_name_tool -delete_rpath "$RPATH" "$APP/Contents/MacOS/TinyMirror"
+done
 cp -R "$RESOURCES/en.lproj" "$RESOURCES/zh-Hans.lproj" "$APP/Contents/Resources/"
 cp native/build/libMirrorCore.dylib "$APP/Contents/Frameworks/"
 cp -R licenses "$APP/Contents/Resources/licenses"

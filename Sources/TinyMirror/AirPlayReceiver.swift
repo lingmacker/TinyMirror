@@ -17,9 +17,12 @@ enum ReceiverEvent {
 final class AirPlayReceiver {
     static let shared = AirPlayReceiver()
 
-    /// Called on a receiver thread with an Annex-B H.264 access unit. Copy the
-    /// bytes before returning.
-    var onVideo: ((UnsafePointer<UInt8>, Int, Bool) -> Void)?
+    /// Receiver-thread callbacks: copy packet bytes before returning. Timestamps are local Unix nanoseconds.
+    var onVideo: ((UnsafePointer<UInt8>, Int, Bool, UInt64) -> Void)?
+    var onAudio: ((UnsafePointer<UInt8>, Int, UInt8, UInt64) -> Void)?
+    var onAudioFormat: ((UInt8, Int, Bool) -> Void)?
+    var onAudioVolume: ((Float) -> Void)?
+    var onAudioFlush: (() -> Void)?
     /// Called on the main thread.
     var onEvent: ((ReceiverEvent) -> Void)?
     var onLog: ((Int, String) -> Void)?
@@ -27,6 +30,7 @@ final class AirPlayReceiver {
     private(set) var isRunning = false
     private let eventLock = NSLock()
     private var eventGeneration = 0
+    private var audioUsesScreen = true
     private init() {}
 
     @discardableResult
@@ -34,19 +38,34 @@ final class AirPlayReceiver {
         guard !isRunning else { return true }
         var cbs = mb_callbacks_t()
         cbs.ctx = Unmanaged.passUnretained(self).toOpaque()
-        cbs.on_video = { ctx, data, len, _, _, isH265 in
+        cbs.on_video = { ctx, data, len, timestamp, _, isH265 in
             guard let ctx, let data else { return }
             let receiver = Unmanaged<AirPlayReceiver>.fromOpaque(ctx).takeUnretainedValue()
-            receiver.onVideo?(data, Int(len), isH265 != 0)
+            receiver.onVideo?(data, Int(len), isH265 != 0, timestamp)
         }
-        cbs.on_audio = { _, _, _, _, _ in
-            // Audio rendering is not implemented yet; frames are dropped.
+        cbs.on_audio = { ctx, data, len, compressionType, timestamp in
+            guard let ctx, let data else { return }
+            let receiver = Unmanaged<AirPlayReceiver>.fromOpaque(ctx).takeUnretainedValue()
+            receiver.onAudio?(data, Int(len), compressionType, timestamp)
         }
         cbs.on_event = { ctx, event, value, info in
             guard let ctx else { return }
             let receiver = Unmanaged<AirPlayReceiver>.fromOpaque(ctx).takeUnretainedValue()
             let infoString = info.map { String(cString: $0) }
-            receiver.handleEvent(event, value: Int(value), info: infoString)
+            // Preserve native callback order for format/flush before subsequent audio packets.
+            switch mb_event_t(rawValue: UInt32(bitPattern: event)) {
+            case MB_EVENT_AUDIO_MODE:
+                receiver.audioUsesScreen = value != 0
+            case MB_EVENT_AUDIO_FORMAT:
+                guard let ct = UInt8(exactly: value) else { return }
+                receiver.onAudioFormat?(ct, infoString.flatMap(Int.init) ?? 0, receiver.audioUsesScreen)
+            case MB_EVENT_AUDIO_VOLUME:
+                receiver.onAudioVolume?(Float(value) / 1000)
+            case MB_EVENT_AUDIO_FLUSH:
+                receiver.onAudioFlush?()
+            default:
+                receiver.handleEvent(event, value: Int(value), info: infoString)
+            }
         }
         cbs.on_log = { ctx, level, msg in
             guard let ctx, let msg else { return }
@@ -66,6 +85,7 @@ final class AirPlayReceiver {
         // Stop joins native callbacks; invalidate their queued UI events before restarting.
         eventLock.withLock { eventGeneration += 1 }
         isRunning = false
+        audioUsesScreen = true
     }
 
     private func handleEvent(_ event: Int32, value: Int, info: String?) {
