@@ -11,38 +11,38 @@ mkdir -p .build/audio-tests
 xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
     -I vendor/UxPlay/lib \
     Tests/RAOPAudioBufferChecks.c vendor/UxPlay/lib/raop_buffer.c \
-    "$TEST_CORE/airplay/libairplay.a" .build/deps/macos26/lib/libcrypto.a \
+    "$TEST_CORE/airplay/libairplay.a" native/build/deps/macos26/lib/libcrypto.a \
     -lpthread -o .build/audio-tests/check-raop-buffer
 .build/audio-tests/check-raop-buffer
 xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
     -I vendor/UxPlay/lib Tests/RAOPAudioClockChecks.c \
-    "$TEST_CORE/airplay/libairplay.a" .build/deps/macos26/lib/libplist-2.0.a \
-    .build/deps/macos26/lib/libcrypto.a -lpthread -o .build/audio-tests/check-raop-clock
+    "$TEST_CORE/airplay/libairplay.a" native/build/deps/macos26/lib/libplist-2.0.a \
+    native/build/deps/macos26/lib/libcrypto.a -lpthread -o .build/audio-tests/check-raop-clock
 .build/audio-tests/check-raop-clock
 xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
     -I vendor/UxPlay/lib Tests/RAOPALACPauseChecks.c \
-    "$TEST_CORE/airplay/libairplay.a" .build/deps/macos26/lib/libplist-2.0.a \
-    .build/deps/macos26/lib/libcrypto.a -lpthread -o .build/audio-tests/check-alac-pause
+    "$TEST_CORE/airplay/libairplay.a" native/build/deps/macos26/lib/libplist-2.0.a \
+    native/build/deps/macos26/lib/libcrypto.a -lpthread -o .build/audio-tests/check-alac-pause
 .build/audio-tests/check-alac-pause
 xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
     -I vendor/UxPlay/lib -I native/include Tests/AudioBridgeFormatChecks.c \
     "$TEST_CORE/airplay/libairplay.a" "$TEST_CORE/playfair/libplayfair.a" \
     "$TEST_CORE/dns_sd/libdnssd.a" "$TEST_CORE/llhttp/libllhttp.a" \
-    .build/deps/macos26/lib/libplist-2.0.a .build/deps/macos26/lib/libcrypto.a \
+    native/build/deps/macos26/lib/libplist-2.0.a native/build/deps/macos26/lib/libcrypto.a \
     -lpthread -o .build/audio-tests/check-audio-bridge
 .build/audio-tests/check-audio-bridge
 xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
-    -DPLIST_210 -DPLIST_230 -I vendor/UxPlay/lib -I .build/deps/macos26/include \
+    -DPLIST_210 -DPLIST_230 -I vendor/UxPlay/lib -I native/build/deps/macos26/include \
     Tests/RAOPConnectionLifecycleChecks.c \
     "$TEST_CORE/airplay/libairplay.a" "$TEST_CORE/playfair/libplayfair.a" \
     "$TEST_CORE/dns_sd/libdnssd.a" "$TEST_CORE/llhttp/libllhttp.a" \
-    .build/deps/macos26/lib/libplist-2.0.a .build/deps/macos26/lib/libcrypto.a \
+    native/build/deps/macos26/lib/libplist-2.0.a native/build/deps/macos26/lib/libcrypto.a \
     -lpthread -o .build/audio-tests/check-connection-lifecycle
 .build/audio-tests/check-connection-lifecycle
 xcrun clang -g -fsanitize=address,undefined -mmacosx-version-min=26.0 \
     -I vendor/UxPlay/lib -I native/include Tests/VideoConfigurationChecks.c \
     "$TEST_CORE/airplay/libairplay.a" "$TEST_CORE/playfair/libplayfair.a" \
     "$TEST_CORE/dns_sd/libdnssd.a" "$TEST_CORE/llhttp/libllhttp.a" \
-    .build/deps/macos26/lib/libplist-2.0.a .build/deps/macos26/lib/libcrypto.a \
+    native/build/deps/macos26/lib/libplist-2.0.a native/build/deps/macos26/lib/libcrypto.a \
     -lpthread -o .build/audio-tests/check-video-configuration
 .build/audio-tests/check-video-configuration

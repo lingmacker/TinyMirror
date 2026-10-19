@@ -3,8 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-PREFIX="$ROOT/.build/deps/macos26"
-SOURCES="$ROOT/.build/dependency-sources"
+PREFIX="$ROOT/native/build/deps/macos26"
+SOURCES="$ROOT/vendor/dependency-sources"
 ARCH="$(uname -m)"
 STAMP="openssl-3.5.9 libplist-2.8.0 macos26 $ARCH $PREFIX"
 

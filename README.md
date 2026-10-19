@@ -128,10 +128,11 @@ TinyMirror 会播放手机持续发送的声音，无法获知手机上哪个应
 brew install cmake pkg-config
 ```
 
-首次构建会下载经过 SHA-256 校验的 OpenSSL 3.5.9 和 libplist 2.8.0 源码，并在
-`.build/deps/macos26` 下为 macOS 26 构建静态库。首次构建需要网络，耗时也会比增量构建更长。
+首次构建会下载经过 SHA-256 校验的 OpenSSL 3.5.9 和 libplist 2.8.0，下载包及解压源码缓存于
+`vendor/dependency-sources/`，静态库和头文件安装于 `native/build/deps/macos26/`。已有下载包校验通过后不会重复下载；
+仅清理 `.build/` 不会删除依赖库，执行 `make clean` 后会复用源码缓存重新编译。首次下载需要网络，耗时也会比增量构建更长。
 不会使用 Homebrew 的 OpenSSL/libplist 二进制包，因为较新的 bottle 可能要求更高版本的 macOS。
-如果删除了 `.build/` 或本地依赖，`make build` 会自动重新创建并刷新 CMake 的依赖路径。
+如果删除了 `native/build/` 或其中的依赖库，`make build` 会自动从源码缓存重建并刷新 CMake 的依赖路径。
 `bootstrap.sh` 还会幂等应用 `native/patches/uxplay-audio-silence.patch`，修复镜像静音占位包阻塞音频重排的问题；真实丢包仍会请求重传。
 
 ```sh
@@ -152,8 +153,8 @@ make clean    # 删除构建产物、dist/ 和 native/build/
 签名证书、钥匙串身份或公证服务。安装直接使用 `cp -Rf` 强制覆盖，不提供失败回滚，
 也不会删除旧版本独有的文件；不会修改用户偏好设置。
 
-`make clean` 会删除 `.build/`、`dist/` 和 `native/build/`，包括本地依赖、依赖源码、SwiftPM 配置和 native CMake 缓存。
-下次构建会自动恢复这些内容。
+`make clean` 会删除 `.build/`、`dist/` 和 `native/build/`，包括本地编译的依赖库、SwiftPM 配置和 native CMake 缓存。
+`vendor/` 中的下载包和源码不受影响，下次构建会复用它们。
 
 ### 发布
 
@@ -189,7 +190,7 @@ iPhone ──(AirPlay：Bonjour + 配对 + FairPlay + RTSP)──▶ libMirrorCo
 - **`Sources/TinyMirror/`**：应用本身，包括菜单栏、原生投屏窗口、`VideoPipeline` 视频封装、
   `AirPlayAudioFormat` 音频封装，以及使用 `AVSampleBufferRenderSynchronizer` 统一音画时钟的 `MediaPlayback`。音频和视频均由系统解码。
 - **`Sources/TinyMirror/Resources/`**：集中存放 `Info.plist`、本地化文案、应用图标和菜单栏资源。`AppIcon.icon/` 中的黑白橘「叠幕」由 Xcode 的 `actool` 编译为原生图标栈和 `.icns`；`Assets.xcassets/` 提供 18 点菜单栏单色模板，未连接时双框空心，连接后前框实心。可编辑菜单栏源文件为 `MenuBarIcon*.svg`，根目录的 `icon.png` 用于文档展示。
-- **`vendor/`**：[UxPlay](https://github.com/FDH2/UxPlay) 的源码目录，由 `scripts/bootstrap.sh` 按固定 commit 获取，不提交到仓库。
+- **`vendor/`**：[UxPlay](https://github.com/FDH2/UxPlay) 由 `scripts/bootstrap.sh` 按固定 commit 获取；`dependency-sources/` 缓存 OpenSSL 和 libplist 的下载包与源码。均不提交到仓库。
 
 ## 路线图
 

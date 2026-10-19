@@ -12,7 +12,7 @@ add_definitions(-DUXPLAY_HAVE_APPLE_P2P)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(UXPLAY ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/UxPlay)
-get_filename_component(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../.build/deps/macos26" ABSOLUTE)
+get_filename_component(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/build/deps/macos26" ABSOLUTE)
 if(NOT EXISTS "${DEPS_PREFIX}/include/openssl/evp.h" OR
    NOT EXISTS "${DEPS_PREFIX}/include/plist/plist.h")
     message(FATAL_ERROR "Native dependencies are missing; run ./native/build.sh to rebuild them.")

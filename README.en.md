@@ -154,11 +154,13 @@ Requires Xcode, CMake 3.22+ and Homebrew's `pkg-config` (`pkgconf`):
 `brew install cmake pkg-config`.
 
 The first build downloads SHA-256-verified OpenSSL 3.5.9 and libplist 2.8.0 source
-archives and builds static libraries for macOS 26 under `.build/deps/macos26`.
-This needs network access once and takes longer than incremental builds. Homebrew's
+archives, caches the archives and extracted sources under `vendor/dependency-sources/`,
+and installs static libraries and headers for macOS 26 under `native/build/deps/macos26/`.
+Existing archives are reused after checksum verification. Clearing only `.build/` preserves
+the dependency libraries; after `make clean`, they rebuild from the source cache without downloading again. The initial download needs network access and takes longer than incremental builds. Homebrew's
 OpenSSL/libplist binaries are not used: newer bottles may require a newer macOS
-version than the app supports. If `.build/` or those local dependencies are deleted,
-`make build` recreates them automatically and refreshes CMake's dependency paths.
+version than the app supports. If `native/build/` or its dependency libraries are deleted,
+`make build` recreates them from the source cache and refreshes CMake's dependency paths.
 `bootstrap.sh` also idempotently applies `native/patches/uxplay-audio-silence.patch`
 to prevent screen-mirroring silence markers from blocking RTP audio reordering;
 genuinely lost packets still request retransmission.
@@ -187,9 +189,9 @@ service is used. Installation uses `cp -Rf` to force-copy over the existing app,
 without rollback or removal of files unique to the old version. User preferences
 are left untouched.
 
-`make clean` removes `.build/`, `dist/`, and `native/build/`, including local dependencies,
-dependency source checkouts, SwiftPM configuration, and the native CMake cache. The next
-build recreates them automatically.
+`make clean` removes `.build/`, `dist/`, and `native/build/`, including locally built
+dependency libraries, SwiftPM configuration, and the native CMake cache. Downloads and
+sources under `vendor/` are preserved and reused by the next build.
 
 ### Distribution
 
@@ -229,7 +231,8 @@ iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP)──▶ libMirrorCo
   `AirPlayAudioFormat` audio packaging, and `MediaPlayback` with a shared `AVSampleBufferRenderSynchronizer` clock. Both streams use system decoding.
 - **`Sources/TinyMirror/Resources/`** — bundle metadata (`Info.plist`), localized strings, app artwork, and menu bar assets. Xcode's `actool` compiles the charcoal, white, and orange “Echo” design in `AppIcon.icon/` into a native icon stack and `.icns`. `Assets.xcassets/` supplies 18-point monochrome menu bar templates: outlined frames when idle, a filled front frame when connected. Editable menu bar sources are `MenuBarIcon*.svg`; the root `icon.png` is the documentation export.
 - **`vendor/`** — [UxPlay](https://github.com/FDH2/UxPlay), fetched at a pinned
-  commit by `scripts/bootstrap.sh` rather than committed.
+  commit by `scripts/bootstrap.sh`, plus OpenSSL/libplist archives and sources cached
+  under `dependency-sources/`. None are committed.
 
 ## Roadmap
 
