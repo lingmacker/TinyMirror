@@ -47,8 +47,17 @@ private enum FrameRateMenuChecks {
         precondition(mb_test_start_count() == starts, "Selecting the current FPS must not restart")
 
         func event(_ event: mb_event_t) {
+            let receiver = AirPlayReceiver.shared
+            let handler = receiver.onEvent
+            var delivered = false
+            receiver.onEvent = { value in handler?(value); delivered = true }
+            defer { receiver.onEvent = handler }
             mb_test_event(Int32(event.rawValue), 0, nil)
-            RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+            let deadline = Date().addingTimeInterval(2)
+            while !delivered, Date() < deadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+            }
+            precondition(delivered, "Receiver did not deliver the queued menu event")
         }
         event(MB_EVENT_CONN_INIT)
         precondition(fpsItems.allSatisfy { !$0.isEnabled })
