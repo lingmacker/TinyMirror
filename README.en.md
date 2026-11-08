@@ -229,7 +229,7 @@ iPhone ──(AirPlay: Bonjour + pairing + FairPlay + RTSP)──▶ libMirrorCo
   `libMirrorCore.dylib` by `make build` (via `native/build.sh`). All third-party code lives here and nowhere else.
 - **`Sources/TinyMirror/`** — menu bar shell, native mirror window, `VideoPipeline` video packaging,
   `AirPlayAudioFormat` audio packaging, and `MediaPlayback` with a shared `AVSampleBufferRenderSynchronizer` clock. Both streams use system decoding.
-- **`Sources/TinyMirror/Resources/`** — bundle metadata (`Info.plist`), localized strings, app artwork, and menu bar assets. Xcode's `actool` compiles the charcoal, white, and orange “Echo” design in `AppIcon.icon/` into a native icon stack and `.icns`. `Assets.xcassets/` supplies 18-point monochrome menu bar templates: outlined frames when idle, a filled front frame when connected. Editable menu bar sources are `MenuBarIcon*.svg`; the root `icon.png` is the documentation export.
+- **`Sources/TinyMirror/Resources/`** — bundle metadata (`Info.plist`), localized strings, app artwork, and menu bar assets. Xcode's `actool` compiles the graphite, silver-white, and warm-orange overlapping-screen design in `AppIcon.icon/` into a native icon stack and `.icns`. `Assets.xcassets/` supplies 18-point monochrome menu bar templates: outlined frames when idle, a filled front frame when connected. Editable menu bar sources are `MenuBarIcon*.svg`; the root `icon.png` is the documentation export.
 - **`vendor/`** — [UxPlay](https://github.com/FDH2/UxPlay), fetched at a pinned
   commit by `scripts/bootstrap.sh`, plus OpenSSL/libplist archives and sources cached
   under `dependency-sources/`. None are committed.

@@ -189,7 +189,7 @@ iPhone ──(AirPlay：Bonjour + 配对 + FairPlay + RTSP)──▶ libMirrorCo
   所有第三方代码只位于这里。
 - **`Sources/TinyMirror/`**：应用本身，包括菜单栏、原生投屏窗口、`VideoPipeline` 视频封装、
   `AirPlayAudioFormat` 音频封装，以及使用 `AVSampleBufferRenderSynchronizer` 统一音画时钟的 `MediaPlayback`。音频和视频均由系统解码。
-- **`Sources/TinyMirror/Resources/`**：集中存放 `Info.plist`、本地化文案、应用图标和菜单栏资源。`AppIcon.icon/` 中的黑白橘「叠幕」由 Xcode 的 `actool` 编译为原生图标栈和 `.icns`；`Assets.xcassets/` 提供 18 点菜单栏单色模板，未连接时双框空心，连接后前框实心。可编辑菜单栏源文件为 `MenuBarIcon*.svg`，根目录的 `icon.png` 用于文档展示。
+- **`Sources/TinyMirror/Resources/`**：集中存放 `Info.plist`、本地化文案、应用图标和菜单栏资源。`AppIcon.icon/` 中的石墨、银白与暖橙「叠屏」由 Xcode 的 `actool` 编译为原生图标栈和 `.icns`；`Assets.xcassets/` 提供 18 点菜单栏单色模板，未连接时双框空心，连接后前框实心。可编辑菜单栏源文件为 `MenuBarIcon*.svg`，根目录的 `icon.png` 用于文档展示。
 - **`vendor/`**：[UxPlay](https://github.com/FDH2/UxPlay) 由 `scripts/bootstrap.sh` 按固定 commit 获取；`dependency-sources/` 缓存 OpenSSL 和 libplist 的下载包与源码。均不提交到仓库。
 
 ## 路线图

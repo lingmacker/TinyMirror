@@ -1,6 +1,6 @@
 {
   "fill": {
-    "solid": "extended-srgb:0.141176,0.145098,0.149020,1.000000"
+    "solid": "extended-srgb:0.156863,0.160784,0.172549,1.000000"
   },
   "groups": [
     {
@@ -8,7 +8,7 @@
       "layers": [
         {
           "image-name": "Echo.svg",
-          "name": "叠幕"
+          "name": "叠屏"
         }
       ],
       "shadow": {
