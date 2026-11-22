@@ -50,13 +50,7 @@ Then on your iPhone: **Control Center → Screen Mirroring → "‹your Mac› (
 
 ## Mirror window
 
-The picture sits inside a slim, 5-point graphite frame with softly rounded
-corners and the native window shadow. Full screen removes the frame for an
-edge-to-edge view. There are no floating controls. The native close, minimize,
-and full-screen buttons are hidden by default: hover near their
-top-left position to reveal them, and leave that area to hide them. Hovering the
-rest of the picture does not reveal the buttons. VoiceOver keeps
-the buttons available. **Escape** exits full screen.
+The picture sits inside a slim 5-point graphite frame with an integrated top status bar, softly rounded corners, and the native window shadow. The top bar hosts the standard window buttons on the left and the **Home** and **Bluetooth Control** buttons on the right, and can be dragged to move the window at any time. Full screen hides the top bar and frame for an edge-to-edge view. **Escape** exits full screen.
 
 Choose **Show Mirror Window** in the menu bar even before connecting to see
 connection instructions. The waiting screen stays until the first video frame
@@ -127,7 +121,7 @@ Restart the app after changing its language in System Settings.
 Worth reading before you install — some of these are permanent.
 
 - **Protected content is limited.** DRM video and audio may appear black or remain silent.
-- **Bluetooth reverse control (BLE HID).** Enable **Control iPhone via Bluetooth** in the menu bar and grant Bluetooth access. On your iPhone, turn on Settings → Accessibility → Touch → AssistiveTouch, then open Devices → Bluetooth Devices and pair **TinyMirror** (iOS may also display your Mac's Bluetooth name). Once connected, click, drag, right-click, scroll, and type directly in the active mirror window (including ⌘C/⌘V/⌘A/⌘X/⌘Z), or send Home from the menu; drag the outer bezel to move the window. After initial pairing, enabling Bluetooth control automatically attempts to reconnect to the paired iPhone. Mirroring itself does not require Bluetooth.
+- **Bluetooth reverse control (BLE HID).** Click **Control** in the mirror window's top bar and grant Bluetooth access. If no device is connected yet, a pairing popover guides you through enabling Settings → Accessibility → Touch → AssistiveTouch on your iPhone and pairing **TinyMirror** (or your Mac's Bluetooth name) under Devices → Bluetooth Devices. Once connected, the popover closes automatically and you can click, drag, right-click, scroll, type (including ⌘C/⌘V/⌘A/⌘X/⌘Z), or click **Home** in the top bar; drag the top bar to move the window. After initial pairing, enabling control automatically attempts to reconnect to the paired iPhone. Mirroring itself does not require Bluetooth.
 - **No Mac App Store.** The App Store accepts neither the AirPlay
   implementation nor GPL-licensed code. Direct download is the only route, the
   same one Reflector and AirServer take.

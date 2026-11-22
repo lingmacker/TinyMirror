@@ -43,6 +43,7 @@ xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/mo
     Sources/TinyMirror/BluetoothHIDReports.swift \
     Sources/TinyMirror/BluetoothHIDState.swift \
     Sources/TinyMirror/BluetoothHIDController.swift \
+    Sources/TinyMirror/MirrorTopBar.swift \
     Sources/TinyMirror/MirrorVideoView.swift \
     Sources/TinyMirror/MirrorWindowController.swift \
     Sources/TinyMirror/Localization.swift \
@@ -75,7 +76,7 @@ xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/mo
     Sources/TinyMirror/Localization.swift Sources/TinyMirror/AirPlayAudioFormat.swift \
     Sources/TinyMirror/MediaPlayback.swift Sources/TinyMirror/VideoPipeline.swift \
     Sources/TinyMirror/BluetoothHIDReports.swift Sources/TinyMirror/BluetoothHIDState.swift \
-    Sources/TinyMirror/BluetoothHIDController.swift \
+    Sources/TinyMirror/BluetoothHIDController.swift Sources/TinyMirror/MirrorTopBar.swift \
     Sources/TinyMirror/MirrorVideoView.swift Sources/TinyMirror/MirrorWindowController.swift \
     Sources/TinyMirror/StatusBarController.swift Sources/TinyMirror/AppDelegate.swift \
     Tests/FrameRateMenuChecks.swift .build/audio-tests/receiver-stub.o \

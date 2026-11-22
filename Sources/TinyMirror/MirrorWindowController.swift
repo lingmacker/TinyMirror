@@ -6,12 +6,23 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     private enum ResizeAxis { case undecided, width, height }
     private enum FullScreenTransition { case entering, exiting }
 
-    // Sizes include the 5pt bezel; the idle picture itself uses a 9:18 ratio.
-    private static let idleWindowSize = NSSize(width: 370, height: 730)
-    private static let idleMinimumSize = NSSize(width: 250, height: 490)
+    // Sizes include the 5pt side/bottom bezel and top status bar; idle picture uses 9:18.
+    static let idleWindowSize = NSSize(
+        width: 360 + MirrorFrameView.borderWidth * 2,
+        height: 720 + MirrorFrameView.topBarHeight + MirrorFrameView.borderWidth)
+    static let idleMinimumSize = NSSize(
+        width: 240 + MirrorFrameView.borderWidth * 2,
+        height: 480 + MirrorFrameView.topBarHeight + MirrorFrameView.borderWidth)
 
     private let frameView = MirrorFrameView()
     var videoView: MirrorVideoView { frameView.videoView }
+    var topBar: MirrorTopBarView { frameView.topBar }
+
+    var onToggleBluetoothControl: ((Bool) -> Void)?
+    var onReconnectBluetooth: (() -> Void)?
+    var onSendHomeButton: (() -> Void)?
+    var hasSavedPairedHost: (() -> Bool)?
+
     private let waitingView = NSBox()
     private let waitingTitle = NSTextField(wrappingLabelWithString: String(localized: "Ready to mirror", bundle: .appLocalization))
     private let waitingHint = NSTextField(wrappingLabelWithString: "")
@@ -21,11 +32,15 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     private var canvasSize: NSSize = .zero
     private var fullScreenCanvasSize: NSSize?
     private var firstFrameReady = false
-    private var buttonTrackingArea: NSTrackingArea?
     private var liveResizeAxis: ResizeAxis?
     private var fullScreenTransition: FullScreenTransition?
     private var dismissAfterFullScreen = false
     private(set) var playbackState = PlaybackState.waiting
+
+    private var bluetoothStatus = BluetoothHIDStatus.disabled()
+    private let pairingPopover = NSPopover()
+    private let pairingPopoverController = BluetoothPairingPopoverController()
+    private var pairingGuideTimer: DispatchWorkItem?
 
     init() {
         let window = NSWindow(
@@ -49,7 +64,9 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         window.contentView = frameView
         frameView.layoutSubtreeIfNeeded()
         buildWaitingView()
-        refreshWindowButtons()
+        wireTopBar()
+        ensureWindowButtonsVisible()
+        alignTopBarControls()
         NotificationCenter.default.addObserver(
             self, selector: #selector(videoReadinessChanged),
             name: .AVSampleBufferDisplayLayerReadyForDisplayDidChange,
@@ -61,6 +78,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
     deinit {
+        pairingGuideTimer?.cancel()
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -103,6 +121,94 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             waitingHint.widthAnchor.constraint(equalTo: stack.widthAnchor),
         ])
     }
+
+    private func wireTopBar() {
+        pairingPopover.behavior = .semitransient
+        pairingPopover.contentViewController = pairingPopoverController
+        pairingPopoverController.onReconnect = { [weak self] in
+            self?.onReconnectBluetooth?()
+        }
+        pairingPopoverController.onTurnOff = { [weak self] in
+            guard let self else { return }
+            self.cancelPairingGuideTimer()
+            self.pairingPopover.performClose(nil)
+            self.onToggleBluetoothControl?(false)
+        }
+        frameView.topBar.onBluetoothButtonClick = { [weak self] in
+            self?.handleBluetoothButtonClick()
+        }
+        frameView.topBar.onHomeButtonClick = { [weak self] in
+            self?.onSendHomeButton?()
+        }
+        frameView.topBar.updateBluetoothStatus(bluetoothStatus)
+    }
+
+    // MARK: - Bluetooth Control Top Bar & Pairing Popover
+
+    func setBluetoothStatus(_ status: BluetoothHIDStatus) {
+        bluetoothStatus = status
+        frameView.topBar.updateBluetoothStatus(status)
+        pairingPopoverController.update(status: status)
+        if !status.isEnabled || (status.isConnected && status.pointerReady) {
+            cancelPairingGuideTimer()
+            if pairingPopover.isShown {
+                pairingPopover.performClose(nil)
+            }
+        }
+    }
+
+    private func handleBluetoothButtonClick() {
+        if !bluetoothStatus.isEnabled {
+            onToggleBluetoothControl?(true)
+            let hasSaved = hasSavedPairedHost?() == true
+            if hasSaved {
+                // Give silent auto-reconnect a brief window before showing pairing instructions.
+                cancelPairingGuideTimer()
+                let work = DispatchWorkItem { [weak self] in
+                    guard let self, self.bluetoothStatus.isEnabled,
+                          !(self.bluetoothStatus.isConnected && self.bluetoothStatus.pointerReady) else { return }
+                    self.showPairingPopover()
+                }
+                pairingGuideTimer = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+            } else {
+                showPairingPopover()
+            }
+            return
+        }
+
+        if bluetoothStatus.isConnected && bluetoothStatus.pointerReady {
+            cancelPairingGuideTimer()
+            pairingPopover.performClose(nil)
+            onToggleBluetoothControl?(false)
+            return
+        }
+
+        // Enabled but waiting to pair, reconnecting, or missing AssistiveTouch.
+        if pairingPopover.isShown {
+            pairingPopover.performClose(nil)
+        } else {
+            showPairingPopover()
+        }
+    }
+
+    private func showPairingPopover() {
+        guard let window, window.isVisible, !frameView.isFullScreen else { return }
+        pairingPopoverController.update(status: bluetoothStatus)
+        if !pairingPopover.isShown {
+            pairingPopover.show(
+                relativeTo: frameView.topBar.bluetoothButton.bounds,
+                of: frameView.topBar.bluetoothButton,
+                preferredEdge: .minY)
+        }
+    }
+
+    private func cancelPairingGuideTimer() {
+        pairingGuideTimer?.cancel()
+        pairingGuideTimer = nil
+    }
+
+    // MARK: - Mirror State
 
     func setReceiverState(name: String, isRunning: Bool) {
         receiverName = name
@@ -165,55 +271,38 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         }
     }
 
-    private func setWindowButtonsVisible(_ hovering: Bool) {
+    private func ensureWindowButtonsVisible() {
         guard let window else { return }
-        // Full screen owns its title-bar reveal; VoiceOver must retain native actions.
-        let visible = hovering || window.styleMask.contains(.fullScreen) || NSWorkspace.shared.isVoiceOverEnabled
         for type in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
-            window.standardWindowButton(type)?.isHidden = !visible
+            window.standardWindowButton(type)?.isHidden = false
         }
     }
 
-    private func refreshWindowButtons() {
-        guard let window else { return }
-        guard !window.styleMask.contains(.fullScreen) else {
-            setWindowButtonsVisible(true)
+    private func alignTopBarControls() {
+        guard let window, !frameView.isFullScreen,
+              let closeButton = window.standardWindowButton(.closeButton)
+        else {
+            frameView.topBar.alignControlsVertically(toLocalY: nil)
             return
         }
-        let rect = [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton]
-            .compactMap { window.standardWindowButton($0) }
-            .reduce(NSRect.null) { $0.union(frameView.convert($1.bounds, from: $1)) }
-            .insetBy(dx: -8, dy: -8).intersection(frameView.bounds)
-        if buttonTrackingArea?.rect != rect {
-            if let buttonTrackingArea { frameView.removeTrackingArea(buttonTrackingArea) }
-            let area = NSTrackingArea(
-                rect: rect, options: [.mouseEnteredAndExited, .activeAlways, .enabledDuringMouseDrag],
-                owner: self, userInfo: nil)
-            frameView.addTrackingArea(area)
-            buttonTrackingArea = area
-        }
-        let point = frameView.convert(window.mouseLocationOutsideOfEventStream, from: nil)
-        setWindowButtonsVisible(window.isVisible && rect.contains(point))
+        let rectInBar = frameView.topBar.convert(closeButton.bounds, from: closeButton)
+        frameView.topBar.alignControlsVertically(toLocalY: rectInBar.midY)
     }
 
-    override func mouseEntered(with event: NSEvent) {
-        let point = frameView.convert(event.locationInWindow, from: nil)
-        setWindowButtonsVisible(buttonTrackingArea?.rect.contains(point) == true)
-    }
-    override func mouseExited(with event: NSEvent) { setWindowButtonsVisible(false) }
-
-    func windowDidMove(_ notification: Notification) { refreshWindowButtons() }
+    func windowDidMove(_ notification: Notification) { alignTopBarControls() }
     func windowWillStartLiveResize(_ notification: Notification) { liveResizeAxis = .undecided }
     func windowDidEndLiveResize(_ notification: Notification) { liveResizeAxis = nil }
     func windowDidResize(_ notification: Notification) {
         frameView.needsLayout = true
         frameView.layoutSubtreeIfNeeded()
-        refreshWindowButtons()
+        ensureWindowButtonsVisible()
+        alignTopBarControls()
     }
     func windowDidResignKey(_ notification: Notification) { videoView.resetPointer() }
     func windowWillClose(_ notification: Notification) {
+        cancelPairingGuideTimer()
+        pairingPopover.performClose(nil)
         videoView.resetPointer()
-        setWindowButtonsVisible(false)
     }
 
     var isAlwaysOnTop = false {
@@ -225,12 +314,16 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     override func cancelOperation(_ sender: Any?) {
+        if pairingPopover.isShown {
+            pairingPopover.performClose(nil)
+            return
+        }
         if fullScreenTransition == nil, window?.styleMask.contains(.fullScreen) == true {
             window?.toggleFullScreen(nil)
         }
     }
 
-    /// The bezel sits outside the picture, so only the inner rectangle follows the video ratio.
+    /// The top bar and bezel sit outside the picture, so only the inner video rectangle follows the aspect ratio.
     func setVideoDimensions(width: Int, height: Int) {
         guard let window, width > 0, height > 0 else { return }
         videoView.videoSize = CGSize(width: width, height: height)
@@ -244,18 +337,19 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
             ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         let aspect = canvasSize.width / canvasSize.height
-        let border = frameView.contentInset * 2
+        let hChrome = frameView.horizontalChrome
+        let vChrome = frameView.verticalChrome
         let targetHeight: CGFloat
         if firstCanvas {
-            targetHeight = min(780, screen.height * 0.8 - border, (screen.width * 0.8 - border) / aspect)
+            targetHeight = min(780, screen.height * 0.8 - vChrome, (screen.width * 0.8 - hChrome) / aspect)
         } else {
-            let longEdge = max(window.frame.width, window.frame.height) - border
-            targetHeight = min(longEdge / max(1, aspect), screen.height - border, (screen.width - border) / aspect)
+            let longEdge = max(window.frame.width - hChrome, window.frame.height - vChrome)
+            targetHeight = min(longEdge / max(1, aspect), screen.height - vChrome, (screen.width - hChrome) / aspect)
         }
         let pictureWidth = targetHeight * aspect
-        let size = NSSize(width: pictureWidth + border, height: targetHeight + border)
+        let size = NSSize(width: pictureWidth + hChrome, height: targetHeight + vChrome)
         let minWidth = min(pictureWidth, max(260, 160 * aspect))
-        window.minSize = NSSize(width: minWidth + border, height: minWidth / aspect + border)
+        window.minSize = NSSize(width: minWidth + hChrome, height: minWidth / aspect + vChrome)
         resizeWindow(to: size, on: screen)
     }
 
@@ -273,7 +367,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     // Zeroing native aspectRatio also zeros resize increments and breaks AppKit restoration.
     func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
         guard canvasSize != .zero, !frameView.isFullScreen, !sender.styleMask.contains(.fullScreen) else { return frameSize }
-        let border = frameView.contentInset * 2
+        let hChrome = frameView.horizontalChrome
+        let vChrome = frameView.verticalChrome
         let aspect = canvasSize.width / canvasSize.height
         let width = max(frameSize.width, sender.minSize.width)
         let height = max(frameSize.height, sender.minSize.height)
@@ -285,17 +380,19 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         }
         // Keep one axis per gesture so our corrected size cannot flip the next resize decision.
         if (liveResizeAxis ?? suggestedAxis) == .width {
-            return NSSize(width: width, height: (width - border) / aspect + border)
+            return NSSize(width: width, height: (width - hChrome) / aspect + vChrome)
         }
-        return NSSize(width: (height - border) * aspect + border, height: height)
+        return NSSize(width: (height - vChrome) * aspect + hChrome, height: height)
     }
 
     func windowWillEnterFullScreen(_ notification: Notification) {
         fullScreenTransition = .entering
         fullScreenCanvasSize = canvasSize
+        cancelPairingGuideTimer()
+        pairingPopover.performClose(nil)
         frameView.isFullScreen = true
         frameView.layoutSubtreeIfNeeded()
-        setWindowButtonsVisible(true)
+        ensureWindowButtonsVisible()
         window?.level = .normal
     }
 
@@ -318,7 +415,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         frameView.layoutSubtreeIfNeeded()
         updateWindowLevel()
         restoreWindowedCanvas()
-        refreshWindowButtons()
+        ensureWindowButtonsVisible()
+        alignTopBarControls()
         if dismissAfterFullScreen {
             dismissAfterFullScreen = false
             dismiss()
@@ -342,7 +440,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         frameView.layoutSubtreeIfNeeded()
         updateWindowLevel()
         restoreWindowedCanvas()
-        refreshWindowButtons()
+        ensureWindowButtonsVisible()
+        alignTopBarControls()
         if dismissAfterFullScreen {
             dismissAfterFullScreen = false
             dismiss()
@@ -352,7 +451,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     func windowDidFailToExitFullScreen(_ window: NSWindow) {
         fullScreenTransition = nil
         dismissAfterFullScreen = false
-        refreshWindowButtons()
+        ensureWindowButtonsVisible()
+        alignTopBarControls()
     }
 
     func present() {
@@ -366,11 +466,14 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(videoView)
         NSApp.activate(ignoringOtherApps: true)
-        refreshWindowButtons()
+        ensureWindowButtonsVisible()
+        alignTopBarControls()
     }
 
     func dismiss() {
         guard let window else { return }
+        cancelPairingGuideTimer()
+        pairingPopover.performClose(nil)
         if frameView.isFullScreen || window.styleMask.contains(.fullScreen) {
             // Leave the native Space before hiding, including when entry is still animating.
             let shouldExit = !dismissAfterFullScreen && fullScreenTransition == nil
@@ -379,6 +482,5 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             return
         }
         window.orderOut(nil)
-        setWindowButtonsVisible(false)
     }
 }

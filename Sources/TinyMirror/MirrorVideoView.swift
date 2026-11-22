@@ -307,17 +307,27 @@ final class MirrorVideoView: NSView {
     }
 }
 
-/// A thin, concentric bezel around the picture; full screen stays edge-to-edge.
+/// A graphite bezel with an integrated top status bar; full screen stays edge-to-edge.
 final class MirrorFrameView: NSView {
     static let borderWidth: CGFloat = 5
-    static let cornerRadius: CGFloat = 18
+    static let topBarHeight: CGFloat = MirrorTopBarView.height
+    static let cornerRadius: CGFloat = 16
+    static let innerCornerRadius: CGFloat = cornerRadius - borderWidth
+
+    let topBar = MirrorTopBarView()
     let videoView = MirrorVideoView()
 
     var isFullScreen = false {
-        didSet { needsLayout = true }
+        didSet {
+            topBar.isHidden = isFullScreen
+            needsLayout = true
+        }
     }
 
     var contentInset: CGFloat { isFullScreen ? 0 : Self.borderWidth }
+    var topChromeInset: CGFloat { isFullScreen ? 0 : Self.topBarHeight }
+    var horizontalChrome: CGFloat { isFullScreen ? 0 : Self.borderWidth * 2 }
+    var verticalChrome: CGFloat { isFullScreen ? 0 : Self.topBarHeight + Self.borderWidth }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -328,6 +338,7 @@ final class MirrorFrameView: NSView {
         videoView.displayLayer.cornerCurve = .continuous
         videoView.displayLayer.masksToBounds = true
         addSubview(videoView)
+        addSubview(topBar)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
@@ -336,8 +347,14 @@ final class MirrorFrameView: NSView {
 
     override func layout() {
         super.layout()
-        videoView.frame = bounds.insetBy(dx: contentInset, dy: contentInset)
+        let topH = topChromeInset
+        topBar.frame = NSRect(x: 0, y: max(0, bounds.height - topH), width: bounds.width, height: topH)
+        videoView.frame = NSRect(
+            x: contentInset,
+            y: contentInset,
+            width: max(0, bounds.width - horizontalChrome),
+            height: max(0, bounds.height - verticalChrome))
         layer?.cornerRadius = isFullScreen ? 0 : Self.cornerRadius
-        videoView.displayLayer.cornerRadius = isFullScreen ? 0 : Self.cornerRadius - contentInset
+        videoView.displayLayer.cornerRadius = isFullScreen ? 0 : Self.innerCornerRadius
     }
 }

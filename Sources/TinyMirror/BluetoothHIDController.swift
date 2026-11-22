@@ -5,13 +5,32 @@ import IOBluetooth
 struct BluetoothHIDStatus: Equatable {
     let isEnabled: Bool
     let isConnected: Bool
+    let isReconnecting: Bool
     let pointerReady: Bool
     let absolutePointerReady: Bool
     let relativePointerReady: Bool
     let keyboardReady: Bool
     let consumerReady: Bool
     let canReconnectPairedHost: Bool
+    let advertisedName: String
+    let macBluetoothName: String?
     let message: String?
+
+    static func disabled(advertisedName: String = "TinyMirror", macBluetoothName: String? = nil) -> BluetoothHIDStatus {
+        BluetoothHIDStatus(
+            isEnabled: false,
+            isConnected: false,
+            isReconnecting: false,
+            pointerReady: false,
+            absolutePointerReady: false,
+            relativePointerReady: false,
+            keyboardReady: false,
+            consumerReady: false,
+            canReconnectPairedHost: false,
+            advertisedName: advertisedName,
+            macBluetoothName: macBluetoothName,
+            message: nil)
+    }
 }
 
 /// Optional Bluetooth LE HID over GATT peripheral for reverse-controlling a
@@ -79,6 +98,10 @@ final class BluetoothHIDController: NSObject, CBPeripheralManagerDelegate, CBCen
 
     var isEnabled: Bool {
         bluetoothQueue.sync { enabled }
+    }
+
+    var hasSavedPairedHost: Bool {
+        loadSavedHost() != nil
     }
 
     var currentStatus: BluetoothHIDStatus {
@@ -908,114 +931,72 @@ final class BluetoothHIDController: NSObject, CBPeripheralManagerDelegate, CBCen
 
     // MARK: - Status Projection
 
+    private func makeStatusOnQueue(
+        isEnabled: Bool,
+        isConnected: Bool = false,
+        isReconnecting: Bool = false,
+        pointerReady: Bool = false,
+        absolutePointerReady: Bool = false,
+        relativePointerReady: Bool = false,
+        keyboardReady: Bool = false,
+        consumerReady: Bool = false,
+        canReconnectPairedHost: Bool = false,
+        message: String?
+    ) -> BluetoothHIDStatus {
+        BluetoothHIDStatus(
+            isEnabled: isEnabled,
+            isConnected: isConnected,
+            isReconnecting: isReconnecting,
+            pointerReady: pointerReady,
+            absolutePointerReady: absolutePointerReady,
+            relativePointerReady: relativePointerReady,
+            keyboardReady: keyboardReady,
+            consumerReady: consumerReady,
+            canReconnectPairedHost: canReconnectPairedHost,
+            advertisedName: localName,
+            macBluetoothName: controllerBluetoothName,
+            message: message)
+    }
+
     private func snapshotStatusOnQueue() -> BluetoothHIDStatus {
         guard enabled else {
-            return BluetoothHIDStatus(
-                isEnabled: false,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
-                message: nil)
+            return makeStatusOnQueue(isEnabled: false, message: nil)
         }
         if systemSleeping {
-            return BluetoothHIDStatus(
-                isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
-                message: nil)
+            return makeStatusOnQueue(isEnabled: true, message: nil)
         }
         if let errorMessage = lastErrorMessage {
-            return BluetoothHIDStatus(
-                isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: savedHostID != nil,
-                message: errorMessage)
+            return makeStatusOnQueue(isEnabled: true, canReconnectPairedHost: savedHostID != nil, message: errorMessage)
         }
         guard let manager else {
-            return BluetoothHIDStatus(
+            return makeStatusOnQueue(
                 isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
                 message: String(localized: "Starting Bluetooth control…", bundle: .appLocalization))
         }
         switch manager.state {
         case .poweredOn:
             break
         case .unauthorized:
-            return BluetoothHIDStatus(
+            return makeStatusOnQueue(
                 isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
                 message: String(localized: "Bluetooth permission denied. Allow TinyMirror in System Settings.", bundle: .appLocalization))
         case .poweredOff:
-            return BluetoothHIDStatus(
+            return makeStatusOnQueue(
                 isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
                 message: String(localized: "Turn on Bluetooth on your Mac.", bundle: .appLocalization))
         case .unknown, .resetting:
-            return BluetoothHIDStatus(
+            return makeStatusOnQueue(
                 isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
                 message: String(localized: "Starting Bluetooth control…", bundle: .appLocalization))
         default:
-            return BluetoothHIDStatus(
+            return makeStatusOnQueue(
                 isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
                 message: String(localized: "Bluetooth unavailable. Check power and permission.", bundle: .appLocalization))
         }
 
         guard published else {
-            return BluetoothHIDStatus(
+            return makeStatusOnQueue(
                 isEnabled: true,
-                isConnected: false,
-                pointerReady: false,
-                absolutePointerReady: false,
-                relativePointerReady: false,
-                keyboardReady: false,
-                consumerReady: false,
-                canReconnectPairedHost: false,
                 message: String(localized: "Starting Bluetooth control…", bundle: .appLocalization))
         }
 
@@ -1034,7 +1015,7 @@ final class BluetoothHIDController: NSObject, CBPeripheralManagerDelegate, CBCen
             } else {
                 message = String(localized: "Connected — enable AssistiveTouch on iPhone for pointer", bundle: .appLocalization)
             }
-            return BluetoothHIDStatus(
+            return makeStatusOnQueue(
                 isEnabled: true,
                 isConnected: true,
                 pointerReady: ptrReady,
@@ -1042,7 +1023,6 @@ final class BluetoothHIDController: NSObject, CBPeripheralManagerDelegate, CBCen
                 relativePointerReady: relReady,
                 keyboardReady: kbReady,
                 consumerReady: consReady,
-                canReconnectPairedHost: false,
                 message: message)
         }
 
@@ -1059,14 +1039,9 @@ final class BluetoothHIDController: NSObject, CBPeripheralManagerDelegate, CBCen
                 String(localized: "Pair “%@” in iPhone AssistiveTouch → Bluetooth Devices", bundle: .appLocalization),
                 localName)
         }
-        return BluetoothHIDStatus(
+        return makeStatusOnQueue(
             isEnabled: true,
-            isConnected: false,
-            pointerReady: false,
-            absolutePointerReady: false,
-            relativePointerReady: false,
-            keyboardReady: false,
-            consumerReady: false,
+            isReconnecting: isReconnecting,
             canReconnectPairedHost: savedHostID != nil,
             message: message)
     }

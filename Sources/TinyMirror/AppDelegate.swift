@@ -81,12 +81,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             self.windowController.videoView.hidControl = status.isConnected ? self.bluetoothControl : nil
             self.windowController.videoView.hidStatus = status.isConnected ? status : nil
-            self.statusBar.setBluetoothStatus(status)
+            self.windowController.setBluetoothStatus(status)
         }
-        statusBar.onToggleBluetoothControl = { [weak self] enabled in
+        windowController.hasSavedPairedHost = { [weak self] in
+            self?.bluetoothControl.hasSavedPairedHost == true
+        }
+        windowController.onToggleBluetoothControl = { [weak self] enabled in
             guard let self else { return }
             self.bluetoothControlRequested = enabled
             if enabled {
+                let hasSaved = self.bluetoothControl.hasSavedPairedHost
+                self.windowController.setBluetoothStatus(BluetoothHIDStatus(
+                    isEnabled: true,
+                    isConnected: false,
+                    isReconnecting: hasSaved,
+                    pointerReady: false,
+                    absolutePointerReady: false,
+                    relativePointerReady: false,
+                    keyboardReady: false,
+                    consumerReady: false,
+                    canReconnectPairedHost: hasSaved,
+                    advertisedName: self.bluetoothControl.localName,
+                    macBluetoothName: nil,
+                    message: String(localized: "Starting Bluetooth control…", bundle: .appLocalization)))
                 // macOS bluetoothd classifies LSUIElement/.accessory apps as appState=20
                 // and denies incoming BLE SMP pairing requests ("no one to handle the request",
                 // error 4815). Switching to .regular foreground policy before starting
@@ -102,13 +119,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.windowController.videoView.hidControl = nil
                 self.windowController.videoView.hidStatus = nil
                 self.bluetoothControl.stop()
+                self.windowController.setBluetoothStatus(.disabled(advertisedName: self.bluetoothControl.localName))
                 NSApp.setActivationPolicy(.accessory)
             }
         }
-        statusBar.onReconnectBluetooth = { [weak self] in
+        windowController.onReconnectBluetooth = { [weak self] in
             self?.bluetoothControl.reconnectPairedHost()
         }
-        statusBar.onSendHomeButton = { [weak self] in
+        windowController.onSendHomeButton = { [weak self] in
             self?.bluetoothControl.sendHome()
         }
         statusBar.onShowWindow = { [weak self] in self?.windowController.present() }
