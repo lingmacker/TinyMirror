@@ -49,4 +49,16 @@ enum Settings {
         get { defaults.object(forKey: "alwaysOnTop") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "alwaysOnTop") }
     }
+
+    /// Last bonded iPhone BLE central identifier used to auto-wake on reconnect.
+    static var lastBluetoothHostID: UUID? {
+        get { defaults.string(forKey: "lastBluetoothHostID").flatMap(UUID.init(uuidString:)) }
+        set {
+            if let newValue {
+                defaults.set(newValue.uuidString, forKey: "lastBluetoothHostID")
+            } else {
+                defaults.removeObject(forKey: "lastBluetoothHostID")
+            }
+        }
+    }
 }

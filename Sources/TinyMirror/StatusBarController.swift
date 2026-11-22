@@ -7,6 +7,13 @@ final class StatusBarController {
     private let clientItem = NSMenuItem(title: String(localized: "No device connected", bundle: .appLocalization), action: nil, keyEquivalent: "")
     private let showItem: NSMenuItem
     private let onTopItem: NSMenuItem
+    private let mouseItem = NSMenuItem(title: String(localized: "Control iPhone via Bluetooth", bundle: .appLocalization), action: #selector(toggleMouse), keyEquivalent: "")
+    private let mouseStatus = NSMenuItem()
+    private let reconnectBluetoothItem = NSMenuItem(title: String(localized: "Reconnect Paired iPhone", bundle: .appLocalization), action: #selector(reconnectBluetooth), keyEquivalent: "")
+    private let homeButtonItem = NSMenuItem(title: String(localized: "Send Home Button", bundle: .appLocalization), action: #selector(sendHomeButton), keyEquivalent: "")
+    var onToggleBluetoothControl: ((Bool) -> Void)?
+    var onReconnectBluetooth: (() -> Void)?
+    var onSendHomeButton: (() -> Void)?
     private let stopItem: NSMenuItem
     private let resolutionMenu = NSMenu()
     private let frameRateMenu = NSMenu()
@@ -61,6 +68,18 @@ final class StatusBarController {
         menu.addItem(showItem)
         menu.addItem(stopItem)
         menu.addItem(onTopItem)
+        mouseItem.target = self
+        mouseItem.isEnabled = true
+        menu.addItem(mouseItem)
+        mouseStatus.isHidden = true
+        mouseStatus.isEnabled = false
+        menu.addItem(mouseStatus)
+        reconnectBluetoothItem.target = self
+        reconnectBluetoothItem.isHidden = true
+        menu.addItem(reconnectBluetoothItem)
+        homeButtonItem.target = self
+        homeButtonItem.isHidden = true
+        menu.addItem(homeButtonItem)
         let resolutionItem = NSMenuItem(title: String(localized: "Resolution", bundle: .appLocalization), action: nil, keyEquivalent: "")
         resolutionMenu.autoenablesItems = false
         for resolution in MirrorResolution.allCases {
@@ -183,6 +202,26 @@ final class StatusBarController {
               left.maxX, right.minX,
               isHiddenBehindNotch ? "IS BEHIND THE NOTCH (free menu bar space)"
                                   : "is clear of the notch")
+    }
+
+    @objc private func toggleMouse() {
+        onToggleBluetoothControl?(mouseItem.state != .on)
+    }
+
+    @objc private func reconnectBluetooth() {
+        onReconnectBluetooth?()
+    }
+
+    @objc private func sendHomeButton() {
+        onSendHomeButton?()
+    }
+
+    func setBluetoothStatus(_ status: BluetoothHIDStatus) {
+        mouseItem.state = status.isEnabled ? .on : .off
+        mouseStatus.title = status.message ?? ""
+        mouseStatus.isHidden = status.message == nil
+        reconnectBluetoothItem.isHidden = !(status.isEnabled && !status.isConnected && status.canReconnectPairedHost)
+        homeButtonItem.isHidden = !(status.isConnected && status.consumerReady)
     }
 
     func setClient(_ name: String?) {

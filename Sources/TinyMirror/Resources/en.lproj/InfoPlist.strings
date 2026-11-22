@@ -1,1 +1,2 @@
 "NSLocalNetworkUsageDescription" = "TinyMirror advertises this Mac as an AirPlay screen mirroring target and connects to your iPhone over Wi-Fi.";
+"NSBluetoothAlwaysUsageDescription" = "TinyMirror uses Bluetooth to act as a mouse and keyboard for your iPhone when you enable Bluetooth control.";

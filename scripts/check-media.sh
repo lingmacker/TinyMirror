@@ -32,11 +32,22 @@ xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/mo
     -framework AVFoundation -framework AudioToolbox -o .build/audio-tests/check-alac-sample-clock
 .build/audio-tests/check-alac-sample-clock
 xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/module-cache \
+    Sources/TinyMirror/BluetoothHIDReports.swift \
+    Sources/TinyMirror/BluetoothHIDState.swift \
+    Tests/BluetoothHIDChecks.swift \
+    -framework AppKit \
+    -o .build/window-tests/check-bluetooth-hid
+.build/window-tests/check-bluetooth-hid
+xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/module-cache \
+    Sources/TinyMirror/Settings.swift \
+    Sources/TinyMirror/BluetoothHIDReports.swift \
+    Sources/TinyMirror/BluetoothHIDState.swift \
+    Sources/TinyMirror/BluetoothHIDController.swift \
     Sources/TinyMirror/MirrorVideoView.swift \
     Sources/TinyMirror/MirrorWindowController.swift \
     Sources/TinyMirror/Localization.swift \
     Tests/WindowBehaviorChecks.swift \
-    -framework AppKit -framework AVFoundation \
+    -framework AppKit -framework AVFoundation -framework CoreBluetooth -framework IOBluetooth \
     -o .build/window-tests/check-window
 .build/window-tests/check-window
 mkdir -p .build/audio-tests/CMirrorBridge
@@ -63,10 +74,12 @@ xcrun swiftc -target "$(uname -m)-apple-macosx26.0" -module-cache-path .build/mo
     Sources/TinyMirror/AirPlayReceiver.swift Sources/TinyMirror/Settings.swift \
     Sources/TinyMirror/Localization.swift Sources/TinyMirror/AirPlayAudioFormat.swift \
     Sources/TinyMirror/MediaPlayback.swift Sources/TinyMirror/VideoPipeline.swift \
+    Sources/TinyMirror/BluetoothHIDReports.swift Sources/TinyMirror/BluetoothHIDState.swift \
+    Sources/TinyMirror/BluetoothHIDController.swift \
     Sources/TinyMirror/MirrorVideoView.swift Sources/TinyMirror/MirrorWindowController.swift \
     Sources/TinyMirror/StatusBarController.swift Sources/TinyMirror/AppDelegate.swift \
     Tests/FrameRateMenuChecks.swift .build/audio-tests/receiver-stub.o \
-    -framework AppKit -framework AVFoundation -framework AudioToolbox \
+    -framework AppKit -framework AVFoundation -framework AudioToolbox -framework CoreBluetooth -framework IOBluetooth \
     -o .build/frame-rate-tests/check-menu
 CFFIXED_USER_HOME="$PWD/.build/frame-rate-tests/home" .build/frame-rate-tests/check-menu
 cmp native/include/mirror_bridge.h Sources/CMirrorBridge/include/mirror_bridge.h

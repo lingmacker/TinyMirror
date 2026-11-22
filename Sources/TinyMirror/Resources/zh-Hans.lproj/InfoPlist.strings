@@ -1,1 +1,2 @@
 "NSLocalNetworkUsageDescription" = "TinyMirror 需要通过本地网络将这台 Mac 作为 AirPlay 投屏接收设备，并通过 Wi-Fi 接收 iPhone 的屏幕画面。";
+"NSBluetoothAlwaysUsageDescription" = "仅在开启蓝牙控制时，TinyMirror 才使用蓝牙作为 iPhone 的鼠标与键盘。";

@@ -19,7 +19,7 @@ your iPhone's Control Center under **Screen Mirroring**, exactly like an Apple T
 — pick it, and your phone shows up in a native macOS window on your desktop.
 Nothing to install on the phone.
 
-TinyMirror receives video and audio; mouse and keyboard input stays on your Mac.
+TinyMirror receives video and audio. Optional Bluetooth reverse control (BLE HID) lets you click, drag, scroll, right-click, type, and press Home directly in the mirror window.
 
 ---
 
@@ -127,7 +127,7 @@ Restart the app after changing its language in System Settings.
 Worth reading before you install — some of these are permanent.
 
 - **Protected content is limited.** DRM video and audio may appear black or remain silent.
-- **No remote control.** Touch, keyboard, and pointer forwarding are not supported.
+- **Bluetooth reverse control (BLE HID).** Enable **Control iPhone via Bluetooth** in the menu bar and grant Bluetooth access. On your iPhone, turn on Settings → Accessibility → Touch → AssistiveTouch, then open Devices → Bluetooth Devices and pair **TinyMirror** (iOS may also display your Mac's Bluetooth name). Once connected, click, drag, right-click, scroll, and type directly in the active mirror window (including ⌘C/⌘V/⌘A/⌘X/⌘Z), or send Home from the menu; drag the outer bezel to move the window. After initial pairing, enabling Bluetooth control automatically attempts to reconnect to the paired iPhone. Mirroring itself does not require Bluetooth.
 - **No Mac App Store.** The App Store accepts neither the AirPlay
   implementation nor GPL-licensed code. Direct download is the only route, the
   same one Reflector and AirServer take.

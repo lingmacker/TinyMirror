@@ -40,7 +40,9 @@ let package = Package(
                 .linkedFramework("AppKit"),
                 .linkedFramework("AVFoundation"),
                 .linkedFramework("AudioToolbox"),
+                .linkedFramework("CoreBluetooth"),
                 .linkedFramework("CoreMedia"),
+                .linkedFramework("IOBluetooth"),
                 .linkedFramework("QuartzCore"),
             ]
         ),

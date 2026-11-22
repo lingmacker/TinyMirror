@@ -37,6 +37,8 @@
 	<!-- Required on macOS 15+: advertise and receive AirPlay on the local network. -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>TinyMirror advertises this Mac as an AirPlay screen mirroring target and connects to your iPhone over Wi-Fi.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>TinyMirror uses Bluetooth to act as a mouse and keyboard for your iPhone when you enable Bluetooth control.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_airplay._tcp</string>

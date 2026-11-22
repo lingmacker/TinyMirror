@@ -26,3 +26,16 @@
 "Frame Rate" = "Frame Rate";
 "Stop mirroring to change; reconnect to apply." = "Stop mirroring to change; reconnect to apply.";
 "Actual stream: %d × %d (%@)" = "Actual stream: %d × %d (%@)";
+"Control iPhone via Bluetooth" = "Control iPhone via Bluetooth";
+"Reconnect Paired iPhone" = "Reconnect Paired iPhone";
+"Send Home Button" = "Send Home Button";
+"Starting Bluetooth control…" = "Starting Bluetooth control…";
+"Bluetooth permission denied. Allow TinyMirror in System Settings." = "Bluetooth permission denied. Allow TinyMirror in System Settings.";
+"Turn on Bluetooth on your Mac." = "Turn on Bluetooth on your Mac.";
+"Bluetooth unavailable. Check power and permission." = "Bluetooth unavailable. Check power and permission.";
+"Pair “%@” in iPhone AssistiveTouch → Bluetooth Devices" = "Pair “%@” in iPhone AssistiveTouch → Bluetooth Devices";
+"Pair “%@” (or “%@”) in iPhone AssistiveTouch → Bluetooth Devices" = "Pair “%@” (or “%@”) in iPhone AssistiveTouch → Bluetooth Devices";
+"Reconnecting to paired iPhone…" = "Reconnecting to paired iPhone…";
+"Bluetooth control connected" = "Bluetooth control connected";
+"Bluetooth pointer connected" = "Bluetooth pointer connected";
+"Connected — enable AssistiveTouch on iPhone for pointer" = "Connected — enable AssistiveTouch on iPhone for pointer";

@@ -11,8 +11,10 @@ private enum WindowBehaviorChecks {
         NSApp.setActivationPolicy(.prohibited)
         let controller = MirrorWindowController()
         let window = controller.window!
+        precondition(controller.videoView.hidControl == nil && controller.videoView.mouseDownCanMoveWindow)
         controller.setDeviceName("Test iPhone")
         controller.setVideoDimensions(width: 720, height: 1280)
+        precondition(controller.videoView.videoSize == CGSize(width: 720, height: 1280))
         let first = window.frame
         let border: CGFloat = 10
         let height = max(window.minSize.height - border, (first.height - border) * 0.85)
@@ -23,6 +25,8 @@ private enum WindowBehaviorChecks {
         let minimum = window.minSize
         controller.setVideoDimensions(width: 1440, height: 2560)
         precondition(window.frame == chosen, "Adaptive resolution reset the user's chosen window frame")
+        precondition(controller.videoView.videoSize == CGSize(width: 1440, height: 2560),
+                     "Same-direction resolution updates must still update videoSize for pointer mapping")
         for size in [(828, 1792), (1080, 1920), (1170, 2532), (640, 1136), (1080, 1080)] {
             controller.setVideoDimensions(width: size.0, height: size.1)
             precondition(window.frame == chosen, "Same-direction content changed the outer window")

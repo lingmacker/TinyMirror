@@ -7,11 +7,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var statusBar = StatusBarController()
     private let windowController = MirrorWindowController()
     private lazy var playback = MediaPlayback(displayLayer: windowController.videoView.displayLayer)
+    private let bluetoothControl = BluetoothHIDController()
+    private var bluetoothControlRequested = false
+    private var powerObservers: [NSObjectProtocol] = []
     private var clientConnected = false
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        windowController.present()
+        return true
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         wireMedia()
         wireUI()
+        installPowerObservers()
         startReceiver()
         if ProcessInfo.processInfo.environment["TINYMIRROR_PREVIEW"] == "1" {
             windowController.present()
@@ -19,6 +28,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        for observer in powerObservers {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+        powerObservers.removeAll()
+        bluetoothControl.stop()
         receiver.stop()
         playback.reset()
     }
@@ -63,6 +77,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func wireUI() {
+        bluetoothControl.onStatusChange = { [weak self] status in
+            guard let self else { return }
+            self.windowController.videoView.hidControl = status.isConnected ? self.bluetoothControl : nil
+            self.windowController.videoView.hidStatus = status.isConnected ? status : nil
+            self.statusBar.setBluetoothStatus(status)
+        }
+        statusBar.onToggleBluetoothControl = { [weak self] enabled in
+            guard let self else { return }
+            self.bluetoothControlRequested = enabled
+            if enabled {
+                // macOS bluetoothd classifies LSUIElement/.accessory apps as appState=20
+                // and denies incoming BLE SMP pairing requests ("no one to handle the request",
+                // error 4815). Switching to .regular foreground policy before starting
+                // CoreBluetooth gives appState=10 so BluetoothUIServer displays pairing prompts.
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                    guard let self, self.bluetoothControlRequested else { return }
+                    self.bluetoothControl.start()
+                }
+            } else {
+                self.windowController.videoView.resetPointer()
+                self.windowController.videoView.hidControl = nil
+                self.windowController.videoView.hidStatus = nil
+                self.bluetoothControl.stop()
+                NSApp.setActivationPolicy(.accessory)
+            }
+        }
+        statusBar.onReconnectBluetooth = { [weak self] in
+            self?.bluetoothControl.reconnectPairedHost()
+        }
+        statusBar.onSendHomeButton = { [weak self] in
+            self?.bluetoothControl.sendHome()
+        }
         statusBar.onShowWindow = { [weak self] in self?.windowController.present() }
         statusBar.onStopMirroring = { [weak self] in self?.stopMirroring() }
         statusBar.onQuit = { NSApp.terminate(nil) }
@@ -74,6 +122,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.setResolution(Settings.resolution)
         statusBar.setFrameRate(Settings.frameRate)
         setAlwaysOnTop(Settings.alwaysOnTop)
+    }
+
+    private func installPowerObservers() {
+        let center = NSWorkspace.shared.notificationCenter
+        powerObservers = [
+            center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.bluetoothControl.systemWillSleep()
+            },
+            center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.bluetoothControl.systemDidWake()
+            },
+        ]
     }
 
     private func setAlwaysOnTop(_ on: Bool) {
@@ -92,6 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func clearMirroringState() {
+        windowController.videoView.resetPointer()
         clientConnected = false
         statusBar.setVideoSettingsEnabled(true)
         statusBar.setClient(nil)

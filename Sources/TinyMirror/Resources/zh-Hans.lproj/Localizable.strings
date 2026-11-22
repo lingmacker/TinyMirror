@@ -26,3 +26,16 @@
 "Frame Rate" = "投屏帧率";
 "Stop mirroring to change; reconnect to apply." = "停止投屏后可切换，重新投屏生效。";
 "Actual stream: %d × %d (%@)" = "实际码流：%d × %d（%@）";
+"Control iPhone via Bluetooth" = "蓝牙控制 iPhone";
+"Reconnect Paired iPhone" = "重连已配对的 iPhone";
+"Send Home Button" = "发送主屏幕键（Home）";
+"Starting Bluetooth control…" = "正在启动蓝牙控制…";
+"Bluetooth permission denied. Allow TinyMirror in System Settings." = "蓝牙权限被拒绝，请在“系统设置”中允许 TinyMirror。";
+"Turn on Bluetooth on your Mac." = "请先在 Mac 上打开蓝牙。";
+"Bluetooth unavailable. Check power and permission." = "蓝牙不可用，请检查蓝牙开关和权限。";
+"Pair “%@” in iPhone AssistiveTouch → Bluetooth Devices" = "请在 iPhone 辅助触控 → 蓝牙设备 中配对“%@”";
+"Pair “%@” (or “%@”) in iPhone AssistiveTouch → Bluetooth Devices" = "请在 iPhone 辅助触控 → 蓝牙设备 中配对“%@”（或“%@”）";
+"Reconnecting to paired iPhone…" = "正在重连已配对的 iPhone…";
+"Bluetooth control connected" = "蓝牙控制已连接";
+"Bluetooth pointer connected" = "蓝牙指针已连接";
+"Connected — enable AssistiveTouch on iPhone for pointer" = "已连接（请在 iPhone 开启辅助触控以使用指针）";

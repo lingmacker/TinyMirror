@@ -117,6 +117,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         if name == nil {
             canvasSize = .zero
             fullScreenCanvasSize = nil
+            videoView.videoSize = .zero
             resetIdleWindowSize()
         }
         updatePlaybackState()
@@ -145,7 +146,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
             playbackState = receiverAvailable ? .waiting : .unavailable
         }
         window?.title = deviceName ?? "TinyMirror"
-        waitingView.isHidden = playbackState == .mirroring
+        videoView.showingVideo = playbackState == .mirroring
+        waitingView.isHidden = videoView.showingVideo
         switch playbackState {
         case .waiting:
             waitingTitle.stringValue = String(localized: "Ready to mirror", bundle: .appLocalization)
@@ -208,7 +210,11 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
         frameView.layoutSubtreeIfNeeded()
         refreshWindowButtons()
     }
-    func windowWillClose(_ notification: Notification) { setWindowButtonsVisible(false) }
+    func windowDidResignKey(_ notification: Notification) { videoView.resetPointer() }
+    func windowWillClose(_ notification: Notification) {
+        videoView.resetPointer()
+        setWindowButtonsVisible(false)
+    }
 
     var isAlwaysOnTop = false {
         didSet { updateWindowLevel() }
@@ -227,6 +233,7 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate {
     /// The bezel sits outside the picture, so only the inner rectangle follows the video ratio.
     func setVideoDimensions(width: Int, height: Int) {
         guard let window, width > 0, height > 0 else { return }
+        videoView.videoSize = CGSize(width: width, height: height)
         let firstCanvas = canvasSize == .zero
         let orientationChanged = width != height && (canvasSize.width == canvasSize.height
             || (width > height) != (canvasSize.width > canvasSize.height))
