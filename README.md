@@ -24,8 +24,8 @@ TinyMirror 默认只接收画面与声音。可选的蓝牙反向控制（BLE HI
 
 ## 安装
 
-从 **[Releases](https://github.com/lingmacker/TinyMirror/releases/latest)** 下载最新的 `.dmg`，
-打开后将 TinyMirror 拖入“应用程序”文件夹。
+从 **[Releases](https://github.com/lingmacker/TinyMirror/releases/latest)** 下载最新的 `.zip`，
+解压后将 `TinyMirror.app` 移入“应用程序”文件夹。
 
 构建产物使用 **ad-hoc 签名**，不是 Developer ID 签名，也没有经过 Apple 公证。
 其他 Mac 下载的副本可能会被 Gatekeeper 拦截。只打开你信任的构建版本；如果 macOS 阻止启动，
@@ -155,17 +155,17 @@ make clean    # 删除构建产物、dist/ 和 native/build/
 
 ### 发布
 
-生成 Release 应用和磁盘映像：
+生成 Release 应用和 ZIP 压缩包：
 
 ```sh
-./scripts/package.sh                 # -> dist/TinyMirror.app + dist/TinyMirror-<ver>.dmg
+./scripts/package.sh                 # -> dist/TinyMirror.app + dist/TinyMirror-<ver>.zip
 VERSION=0.2.0 ./scripts/package.sh
 ```
 
 推送版本标签（例如 `v0.2.0`）会触发 GitHub Actions，在 macOS 26 runner 上自动构建并发布
-`TinyMirror-0.2.0.dmg` 到 GitHub Releases。发布工作流位于 `.github/workflows/release.yml`。
+`TinyMirror-0.2.0.zip` 到 GitHub Releases。发布工作流位于 `.github/workflows/release.yml`。
 
-`package.sh` 会执行 `make build CONFIGURATION=release`，使用同一套应用组装流程，然后创建并签名磁盘映像。
+`package.sh` 会执行 `make build CONFIGURATION=release`，使用同一套应用组装流程，然后通过 `ditto` 打包为保留签名的 ZIP 压缩包。
 Ad-hoc 签名只提供代码完整性，不证明开发者身份，也不等同于公证，因此 Gatekeeper 可能阻止带隔离属性的下载文件。
 旧的 `NOTARIZE=1` 选项现在会明确失败；ad-hoc 构建不能提交给 Apple 公证。
 

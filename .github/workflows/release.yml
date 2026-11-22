@@ -49,11 +49,11 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "dist/TinyMirror-$VERSION.dmg" --clobber
+            gh release upload "$GITHUB_REF_NAME" "dist/TinyMirror-$VERSION.zip" --clobber
             gh release edit "$GITHUB_REF_NAME" \
               --title "TinyMirror $VERSION" --draft=false --latest
           else
             gh release create "$GITHUB_REF_NAME" \
-              "dist/TinyMirror-$VERSION.dmg" \
+              "dist/TinyMirror-$VERSION.zip" \
               --title "TinyMirror $VERSION" --generate-notes
           fi

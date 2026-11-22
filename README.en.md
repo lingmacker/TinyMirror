@@ -25,8 +25,8 @@ TinyMirror receives video and audio. Optional Bluetooth reverse control (BLE HID
 
 ## Installing
 
-Download the latest `.dmg` from **[Releases](https://github.com/lingmacker/TinyMirror/releases/latest)**,
-open it, and drag TinyMirror to Applications.
+Download the latest `.zip` from **[Releases](https://github.com/lingmacker/TinyMirror/releases/latest)**,
+unzip it, and move `TinyMirror.app` to Applications.
 
 Builds use **ad-hoc signing**, not Developer ID signing or Apple notarization.
 Downloaded copies may be blocked by Gatekeeper on other Macs. Only open builds
@@ -189,19 +189,19 @@ sources under `vendor/` are preserved and reused by the next build.
 
 ### Distribution
 
-To produce a Release app and disk image:
+To produce a Release app and ZIP archive:
 
 ```sh
-./scripts/package.sh                 # -> dist/TinyMirror.app + dist/TinyMirror-<ver>.dmg
+./scripts/package.sh                 # -> dist/TinyMirror.app + dist/TinyMirror-<ver>.zip
 VERSION=0.2.0 ./scripts/package.sh
 ```
 
 Pushing a version tag such as `v0.2.0` triggers GitHub Actions to build on a macOS 26
-runner and publish `TinyMirror-0.2.0.dmg` to GitHub Releases. The workflow is
+runner and publish `TinyMirror-0.2.0.zip` to GitHub Releases. The workflow is
 `.github/workflows/release.yml`.
 
 `package.sh` uses `make build CONFIGURATION=release` for the same bundle assembly,
-then creates and ad-hoc signs the disk image. Ad-hoc signatures provide code
+then archives the ad-hoc signed app with `ditto` into a `.zip` file. Ad-hoc signatures provide code
 integrity, not developer identity or notarization, so Gatekeeper may block
 quarantined downloads. The old `NOTARIZE=1` option now fails with an explicit
 message; ad-hoc builds cannot be submitted for Apple notarization.

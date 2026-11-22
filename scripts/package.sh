@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build an ad-hoc signed Release app through Make, plus an ad-hoc DMG.
+# Build an ad-hoc signed Release app through Make, plus a ZIP archive.
 # Usage: VERSION=0.2.0 ./scripts/package.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -18,21 +18,10 @@ export VERSION BUILD_NUMBER COPYRIGHT
 
 make build CONFIGURATION=release
 APP="dist/TinyMirror.app"
-DMG="dist/TinyMirror-$VERSION.dmg"
-STAGE="dist/dmg"
-trap 'rm -rf "$STAGE"' EXIT
+ZIP="dist/TinyMirror-$VERSION.zip"
 
-rm -rf "$STAGE" "$DMG"
-mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/TinyMirror.app"
-ln -s /Applications "$STAGE/Applications"
-if diskutil image create from --help >/dev/null 2>&1; then
-    diskutil image create from --volumeName TinyMirror --format UDZO "$STAGE" "$DMG"
-else
-    hdiutil create -volname TinyMirror -srcfolder "$STAGE" -ov -format UDZO "$DMG"
-fi
-codesign --force --sign - "$DMG"
-codesign --verify --strict "$DMG"
+rm -f "$ZIP"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
 
-echo "Built $APP and $DMG (ad-hoc signed, not notarized)."
+echo "Built $APP and $ZIP (ad-hoc signed, not notarized)."
 echo "Gatekeeper may block downloaded copies on other Macs; ad-hoc signing does not verify the developer."
